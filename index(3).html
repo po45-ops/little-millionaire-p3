@@ -22,6 +22,8 @@
             --indigo: #4338ca;
             --ink: #25213a;
             --glass: rgba(255, 255, 255, 0.93);
+            --distance-copy: clamp(1.05rem, 1.35vw, 1.3rem);
+            --distance-heading: clamp(2rem, 3.2vw, 3rem);
         }
 
         * { box-sizing: border-box; }
@@ -82,6 +84,27 @@
             background: linear-gradient(110deg, #db2777 0%, #7c3aed 52%, #4338ca 100%);
             box-shadow: inset 0 -1px 0 rgba(255,255,255,.18);
         }
+        .header-brand { flex: 1 1 350px; min-width: 0; }
+        .header-actions { flex: 0 1 auto; min-width: 0; }
+        .app-title {
+            font-size: clamp(1.35rem, 2.35vw, 2rem);
+            line-height: 1.25;
+        }
+        .app-subtitle {
+            margin-top: 3px;
+            font-size: clamp(.8rem, 1.15vw, 1rem);
+            line-height: 1.4;
+        }
+        .screen-title {
+            font-size: var(--distance-heading);
+            line-height: 1.28;
+            text-wrap: balance;
+        }
+        .screen-copy {
+            font-size: var(--distance-copy);
+            line-height: 1.65;
+            text-wrap: pretty;
+        }
 
         .btn-choice {
             transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
@@ -98,7 +121,7 @@
 
         .mode-card {
             position: relative;
-            min-height: 194px;
+            min-height: 226px;
             overflow: hidden;
             text-align: left;
             isolation: isolate;
@@ -127,29 +150,40 @@
         .mode-tag {
             display: inline-flex;
             align-items: center;
-            min-height: 25px;
-            padding: 3px 9px;
+            min-height: 30px;
+            padding: 4px 11px;
             border-radius: 999px;
             background: rgba(255,255,255,.66);
-            font-size: .69rem;
+            font-size: clamp(.78rem, 1vw, .92rem);
             font-weight: 600;
             letter-spacing: .04em;
+        }
+        .mode-name {
+            font-size: clamp(1.35rem, 1.9vw, 1.65rem);
+            line-height: 1.35;
+        }
+        .mode-description {
+            font-size: clamp(1rem, 1.25vw, 1.14rem);
+            line-height: 1.6;
         }
 
         .money-photo {
             display: inline-block;
             flex: 0 0 auto;
             background-repeat: no-repeat;
-            background-color: #f5f1e8;
-            border: 1px solid rgba(66, 51, 37, .2);
-            box-shadow: 0 7px 14px rgba(47, 37, 25, .2), inset 0 0 0 1px rgba(255,255,255,.3);
+            background-color: transparent;
+            border: 0;
+            box-shadow: 0 7px 14px rgba(47, 37, 25, .18);
+            mix-blend-mode: multiply;
             overflow: hidden;
             vertical-align: middle;
         }
-        .money-photo.bill-photo { border-radius: 5px; }
+        .money-photo.bill-photo { border-radius: 3px; }
         .money-photo.coin-photo {
             border-radius: 999px;
-            box-shadow: 0 7px 13px rgba(47, 37, 25, .24), inset 0 0 0 1px rgba(255,255,255,.35);
+            clip-path: circle(48% at 50% 50%);
+            box-shadow: none;
+            filter: drop-shadow(0 7px 6px rgba(47, 37, 25, .23));
         }
         .money-item {
             position: relative;
@@ -159,16 +193,85 @@
             gap: 5px;
         }
         .money-value-chip {
-            padding: 2px 8px;
+            min-width: 64px;
+            padding: 4px 11px;
             border-radius: 999px;
-            background: rgba(255,255,255,.92);
+            background: rgba(255,255,255,.86);
             color: #4c1d95;
-            font-size: .72rem;
+            font-size: clamp(.95rem, 1.45vw, 1.18rem);
+            line-height: 1.35;
+            text-align: center;
             font-weight: 600;
             box-shadow: 0 2px 7px rgba(40,30,60,.12);
         }
-        .grab-money-button { border-radius: 12px; padding: 5px; }
-        .grab-money-button:hover .money-photo { box-shadow: 0 10px 20px rgba(76,29,149,.28); }
+        .grab-money-button {
+            appearance: none;
+            border: 2px solid transparent;
+            border-radius: 14px;
+            padding: 7px;
+            background: transparent;
+        }
+        .grab-money-button.btn-choice { box-shadow: none; }
+        .grab-money-button:hover:not(:disabled),
+        .grab-money-button:focus-visible:not(:disabled) {
+            background: rgba(255,255,255,.28);
+            box-shadow: none;
+        }
+        .currency-sound-card { background: rgba(255,255,255,.64); }
+        .currency-sound-card:hover { background: rgba(255,255,255,.82); }
+
+        .question-panel { padding: clamp(1rem, 2vw, 1.5rem); }
+        .question-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .question-count {
+            font-size: clamp(1rem, 1.35vw, 1.18rem);
+            line-height: 1.4;
+            white-space: nowrap;
+        }
+        .question-title {
+            margin: 0;
+            padding-inline: clamp(.25rem, 2vw, 1.5rem);
+            font-size: clamp(1.8rem, 3.1vw, 2.65rem);
+            line-height: 1.45;
+            text-wrap: balance;
+        }
+        .replay-button {
+            flex: 0 0 auto;
+            min-width: 46px;
+            min-height: 46px;
+            display: grid;
+            place-items: center;
+            font-size: 1.25rem;
+        }
+        .grab-layout {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: clamp(1rem, 2vw, 1.4rem);
+            width: 100%;
+        }
+        .grab-zone-panel {
+            min-width: 0;
+            padding: clamp(1rem, 1.7vw, 1.35rem);
+        }
+        .zone-title {
+            font-size: clamp(1.35rem, 2vw, 1.7rem);
+            line-height: 1.35;
+        }
+        .zone-help {
+            font-size: clamp(.98rem, 1.25vw, 1.12rem);
+            line-height: 1.55;
+        }
+        .answer-choice {
+            min-height: 68px;
+            padding: 14px 18px;
+            font-size: clamp(1.35rem, 2.25vw, 1.85rem);
+            line-height: 1.3;
+        }
 
         .ar-focus {
             outline: 5px solid rgba(34,197,94,.9) !important;
@@ -197,7 +300,7 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(180deg, rgba(15,23,42,.15), rgba(15,23,42,.04) 45%, rgba(15,23,42,.23));
+            background: linear-gradient(180deg, rgba(15,23,42,.08), transparent 45%, rgba(15,23,42,.12));
         }
         #hand-canvas {
             position: fixed;
@@ -222,7 +325,8 @@
             box-shadow: 0 14px 40px rgba(0,0,0,.3);
             backdrop-filter: blur(14px);
             text-align: center;
-            font-size: .82rem;
+            font-size: clamp(.95rem, 1.35vw, 1.12rem);
+            line-height: 1.5;
         }
         #gesture-ghost {
             position: fixed;
@@ -238,25 +342,54 @@
         body.ar-mode::before,
         body.ar-mode::after { display: none; }
         body.ar-mode #game-container {
-            background: rgba(255,255,255,.78);
-            border-color: rgba(255,255,255,.7);
+            background: rgba(255,255,255,.3);
+            border-color: rgba(255,255,255,.52);
             box-shadow: 0 22px 70px rgba(0,0,0,.3);
-            backdrop-filter: blur(13px);
+            backdrop-filter: blur(2px);
+            margin-bottom: 70px;
+        }
+        body.ar-mode .app-header {
+            background: linear-gradient(110deg, rgba(219,39,119,.82), rgba(124,58,237,.8) 52%, rgba(67,56,202,.82));
+            backdrop-filter: blur(5px);
         }
         body.ar-mode #screen-home,
         body.ar-mode #screen-learning,
         body.ar-mode #screen-game,
         body.ar-mode #screen-grab,
-        body.ar-mode #screen-summary { background: rgba(255,255,255,.12); }
+        body.ar-mode #screen-summary { background: transparent; }
+        body.ar-mode .question-panel,
+        body.ar-mode .grab-zone-panel,
+        body.ar-mode #money-display,
+        body.ar-mode .reference-panel {
+            background: rgba(255,255,255,.48) !important;
+            border-color: rgba(255,255,255,.62) !important;
+            backdrop-filter: blur(2px);
+        }
+        body.ar-mode .money-value-chip,
+        body.ar-mode .currency-sound-card { background: rgba(255,255,255,.72); }
+        body.ar-mode #overlay-feedback {
+            background: rgba(255,255,255,.68) !important;
+            backdrop-filter: blur(4px);
+        }
 
         @media (max-width: 700px) {
             body { padding: 8px !important; align-items: stretch !important; }
             #game-container { border-radius: 22px !important; }
             .app-header { padding: 11px !important; border-radius: 22px 22px 0 0 !important; }
-            .mode-card { min-height: 150px; }
+            .header-brand { flex-basis: 100%; }
+            .header-actions { width: 100%; justify-content: flex-end; }
+            .mode-card { min-height: 184px; }
             .money-photo { max-width: 100%; }
             #screen-grab, #screen-game, #screen-learning { padding: 14px !important; }
             .ar-long-label { display: none; }
+            .question-title { padding-inline: 0; }
+            .grab-layout { grid-template-columns: 1fr; }
+            .zone-help { margin-bottom: 10px; }
+            #ar-hud { bottom: max(8px, env(safe-area-inset-bottom)); }
+        }
+
+        @media (min-width: 701px) and (max-width: 920px) {
+            .grab-layout { grid-template-columns: 1fr; }
         }
 
         @media (max-height: 740px) {
@@ -282,28 +415,28 @@
     </div>
 
     <!-- Main Game Container -->
-    <main id="game-container" class="w-full max-w-5xl rounded-3xl overflow-hidden animate-bounce-in relative z-10" aria-label="เกมเศรษฐีน้อย ป.3">
+    <main id="game-container" class="w-full max-w-6xl rounded-3xl overflow-hidden animate-bounce-in relative z-10" aria-label="เกมเศรษฐีน้อย ป.3">
 
         <!-- Header -->
         <header class="app-header p-4 text-white flex flex-wrap justify-between items-center gap-3 rounded-t-3xl">
-            <div class="flex items-center gap-2 min-w-0">
+            <div class="header-brand flex items-center gap-3 min-w-0">
                 <button type="button" id="btn-back" onclick="goBack()" class="hidden btn-choice shrink-0 bg-white/18 hover:bg-white/28 border border-white/30 text-white px-3 py-2 rounded-xl font-medium" aria-label="ย้อนกลับหน้าแรก">
                     ← <span class="hidden sm:inline">ย้อนกลับ</span>
                 </button>
                 <button type="button" onclick="goToHome()" class="text-left min-w-0 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-white" aria-label="ไปหน้าแรก">
-                    <span class="text-lg md:text-2xl font-semibold flex items-center gap-2 leading-tight"><span aria-hidden="true">💰</span> เกมเศรษฐีน้อย ป.3</span>
-                    <span class="block text-[11px] md:text-xs text-white/75 font-light ml-8">Money Skills Adventure</span>
+                    <span class="app-title font-semibold flex items-center gap-2"><span aria-hidden="true">💰</span> เกมเศรษฐีน้อย ป.3</span>
+                    <span class="app-subtitle block text-white/80 font-light ml-8">Money Skills Adventure</span>
                 </button>
             </div>
-            <div class="flex items-center gap-2 ml-auto">
-                <button type="button" id="btn-toggle-cam" onclick="toggleCameraMode()" class="btn-choice bg-white/15 hover:bg-white/25 text-white px-3 py-2 rounded-xl text-sm font-medium border border-white/30 flex items-center gap-2" aria-pressed="false">
-                    <span id="cam-button-icon" class="text-lg" aria-hidden="true">📷</span>
+            <div class="header-actions flex items-center gap-3 ml-auto">
+                <button type="button" id="btn-toggle-cam" onclick="toggleCameraMode()" class="btn-choice bg-white/15 hover:bg-white/25 text-white px-4 py-2.5 rounded-xl font-medium border border-white/30 flex items-center gap-2" aria-pressed="false">
+                    <span id="cam-button-icon" class="text-xl" aria-hidden="true">📷</span>
                     <span class="text-left leading-tight">
-                        <strong id="cam-button-title" class="block text-xs md:text-sm">เปิด AR Camera</strong>
-                        <small class="ar-long-label block text-[9px] text-white/70 font-light">Augmented Reality</small>
+                        <strong id="cam-button-title" class="block text-sm md:text-base">เปิด AR Camera</strong>
+                        <small class="ar-long-label block text-xs text-white/75 font-light mt-0.5">Augmented Reality</small>
                     </span>
                 </button>
-                <div id="score-display" class="hidden text-sm md:text-base font-semibold bg-white/18 border border-white/20 px-3 py-2 rounded-xl whitespace-nowrap" aria-live="polite">
+                <div id="score-display" class="hidden text-base md:text-lg font-semibold bg-white/18 border border-white/20 px-4 py-2.5 rounded-xl whitespace-nowrap" aria-live="polite">
                     ⭐ <span id="score">0</span>/<span id="score-max">10</span>
                 </div>
             </div>
@@ -313,9 +446,9 @@
         <section id="screen-home" class="p-5 md:p-8 flex flex-col items-center justify-center min-h-[520px]">
             <div class="w-full grid md:grid-cols-[1fr_auto] items-center gap-5 mb-7">
                 <div>
-                    <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-100 text-purple-700 text-xs font-semibold mb-3">✨ เกมฝึกทักษะการเงินสำหรับ ป.3</span>
-                    <h2 class="text-3xl md:text-4xl font-semibold leading-tight text-purple-950">เรียนรู้เงินจริงไทย<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-violet-600">สนุกทั้งแตะและใช้มือ</span></h2>
-                    <p class="mt-3 text-gray-600 max-w-2xl text-sm md:text-base">ฝึกดูธนบัตร–เหรียญ นับเงิน ทอนเงิน และหยิบเงินให้ตรงจำนวน พร้อมโหมดกล้องความจริงเสริม</p>
+                    <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 text-purple-700 text-sm md:text-base font-semibold mb-4">✨ เกมฝึกทักษะการเงินสำหรับ ป.3</span>
+                    <h2 class="screen-title font-semibold text-purple-950">เรียนรู้เงินจริงไทย<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-violet-600">สนุกทั้งแตะและใช้มือ</span></h2>
+                    <p class="screen-copy mt-4 text-gray-600 max-w-3xl">ฝึกดูธนบัตร–เหรียญ นับเงิน ทอนเงิน และหยิบเงินให้ตรงจำนวน พร้อมโหมดกล้องความจริงเสริม</p>
                 </div>
                 <div class="hidden md:grid place-items-center w-36 h-36 rounded-[2.2rem] bg-gradient-to-br from-yellow-100 to-pink-100 border border-white shadow-lg float-soft">
                     <img src="https://api.iconify.design/noto:money-bag.svg" alt="ถุงเงิน" class="w-24 h-24">
@@ -326,31 +459,31 @@
                 <button type="button" onclick="openLearningRoom()" class="mode-card btn-choice bg-blue-50 hover:bg-blue-100 border-2 border-blue-200 text-blue-900 p-5 rounded-2xl flex flex-col gap-3">
                     <span class="mode-icon text-3xl" aria-hidden="true">📖</span>
                     <span class="mode-tag text-blue-700">LEARN</span>
-                    <span class="text-xl font-semibold">ห้องเรียนรู้</span>
-                    <span class="text-sm text-blue-900/70">ดูธนบัตรและเหรียญไทยจากภาพจริง</span>
+                    <span class="mode-name font-semibold">ห้องเรียนรู้</span>
+                    <span class="mode-description text-blue-900/70">ดูธนบัตรและเหรียญไทยจากภาพจริง</span>
                 </button>
                 <button type="button" onclick="startGame('count')" class="mode-card btn-choice bg-emerald-50 hover:bg-emerald-100 border-2 border-emerald-200 text-emerald-900 p-5 rounded-2xl flex flex-col gap-3">
                     <span class="mode-icon text-3xl" aria-hidden="true">🧮</span>
                     <span class="mode-tag text-emerald-700">COUNT</span>
-                    <span class="text-xl font-semibold">โหมดนับเงิน</span>
-                    <span class="text-sm text-emerald-900/70">รวมมูลค่าจากภาพเงินจริงให้ถูกต้อง</span>
+                    <span class="mode-name font-semibold">โหมดนับเงิน</span>
+                    <span class="mode-description text-emerald-900/70">รวมมูลค่าจากภาพเงินจริงให้ถูกต้อง</span>
                 </button>
                 <button type="button" onclick="startGame('change')" class="mode-card btn-choice bg-orange-50 hover:bg-orange-100 border-2 border-orange-200 text-orange-900 p-5 rounded-2xl flex flex-col gap-3">
                     <span class="mode-icon text-3xl" aria-hidden="true">🛒</span>
                     <span class="mode-tag text-orange-700">CHANGE</span>
-                    <span class="text-xl font-semibold">โหมดทอนเงิน</span>
-                    <span class="text-sm text-orange-900/70">ฝึกซื้อของและคำนวณเงินทอน</span>
+                    <span class="mode-name font-semibold">โหมดทอนเงิน</span>
+                    <span class="mode-description text-orange-900/70">ฝึกซื้อของและคำนวณเงินทอน</span>
                 </button>
                 <button type="button" onclick="startGame('grab')" class="mode-card btn-choice bg-amber-50 hover:bg-amber-100 border-2 border-amber-200 text-amber-900 p-5 rounded-2xl flex flex-col gap-3">
                     <span class="mode-icon text-3xl" aria-hidden="true">🤏</span>
                     <span class="mode-tag text-amber-700">GRAB</span>
-                    <span class="text-xl font-semibold">โหมดหยิบเงิน</span>
-                    <span class="text-sm text-amber-900/70">แตะ หรือใช้ท่าจีบนิ้วหยิบใส่ตะกร้า</span>
+                    <span class="mode-name font-semibold">โหมดหยิบเงิน</span>
+                    <span class="mode-description text-amber-900/70">แตะ หรือใช้ท่าจีบนิ้วหยิบใส่ตะกร้า</span>
                 </button>
             </div>
             <button type="button" onclick="toggleCameraMode()" class="btn-choice mt-6 w-full md:w-auto px-5 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center gap-3">
                 <span class="text-2xl" aria-hidden="true">🖐️</span>
-                <span class="text-left"><strong class="block text-sm">ลองโหมด AR — Augmented Reality</strong><small class="block text-white/65">เห็นตัวเองเป็นพื้นหลัง แล้วชี้หรือจีบนิ้วเพื่อเล่น</small></span>
+                <span class="text-left"><strong class="block text-base md:text-lg">ลองโหมด AR — Augmented Reality</strong><small class="block text-sm md:text-base text-white/70 mt-1">เห็นตัวเองเป็นพื้นหลัง แล้วชี้หรือจีบนิ้วเพื่อเล่น</small></span>
             </button>
         </section>
 
@@ -358,18 +491,18 @@
         <section id="screen-learning" class="hidden p-6 flex-col items-center min-h-[520px] max-h-[78vh] overflow-y-auto">
             <div class="w-full mb-4">
                 <span class="mode-tag bg-blue-100 text-blue-700 mb-2">LEARNING ROOM</span>
-                <h2 class="text-2xl md:text-3xl font-semibold text-blue-900">📖 ห้องเรียนรู้เรื่องเงินไทย</h2>
+                <h2 class="screen-title font-semibold text-blue-900">📖 ห้องเรียนรู้เรื่องเงินไทย</h2>
             </div>
 
-            <p class="text-gray-600 mb-4 text-center">ดูภาพธนบัตรและเหรียญไทย แล้วเลือกภาพย่อยด้านล่างเพื่อฟังชื่อและมูลค่า</p>
+            <p class="screen-copy text-gray-600 mb-5 text-center">ดูภาพธนบัตรและเหรียญไทย แล้วเลือกภาพย่อยด้านล่างเพื่อฟังชื่อและมูลค่า</p>
 
-            <figure class="bg-white/70 p-2 rounded-2xl shadow-inner mb-6 w-full flex flex-col items-center border border-white">
+            <figure class="reference-panel bg-white/70 p-3 rounded-2xl shadow-inner mb-6 w-full flex flex-col items-center border border-white">
                 <img src="assets/thai-money-reference.png" alt="ภาพตัวอย่างธนบัตรไทยชนิด 20 50 100 500 และ 1,000 บาท พร้อมเหรียญ 1 2 5 และ 10 บาท" class="max-w-full h-auto rounded-xl shadow-md">
-                <figcaption class="text-[11px] text-gray-500 mt-2 text-center">ภาพตัวอย่างเพื่อการศึกษา ไม่สามารถใช้แทนเงินจริงได้</figcaption>
+                <figcaption class="text-sm md:text-base leading-relaxed text-gray-600 mt-3 text-center">ภาพตัวอย่างเพื่อการศึกษา ไม่สามารถใช้แทนเงินจริงได้</figcaption>
             </figure>
 
             <div class="w-full">
-                <h3 class="font-semibold text-lg mb-3 text-gray-700">แตะภาพเพื่อฟังเสียง</h3>
+                <h3 class="font-semibold text-xl md:text-2xl mb-4 text-gray-700">แตะภาพเพื่อฟังเสียง</h3>
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" id="sound-board">
                     <!-- ปุ่มถูกสร้างด้วย JS -->
                 </div>
@@ -379,12 +512,12 @@
         <!-- SCREEN: GAME (QUIZ) -->
         <section id="screen-game" class="hidden p-6 flex-col items-center min-h-[520px]">
             <!-- Question Box -->
-            <div class="bg-indigo-50/90 border-2 border-indigo-200 rounded-2xl p-5 w-full mb-6 text-center shadow-sm relative">
-                <span class="absolute top-2 left-4 text-indigo-500 font-semibold text-sm">ข้อที่ <span id="question-number">1</span>/<span id="question-max">10</span></span>
-                <button type="button" onclick="replayAudio()" class="absolute top-2 right-4 text-indigo-500 hover:text-indigo-700 bg-indigo-100 hover:bg-indigo-200 p-2 rounded-full transition-colors" title="ฟังคำถามซ้ำ">
-                    🔊
-                </button>
-                <h2 id="question-text" class="text-xl md:text-2xl font-semibold text-indigo-950 mt-4">คำถามจะแสดงที่นี่</h2>
+            <div class="question-panel bg-indigo-50/90 border-2 border-indigo-200 rounded-2xl w-full mb-6 text-center shadow-sm">
+                <div class="question-toolbar">
+                    <span class="question-count text-indigo-600 font-semibold">ข้อที่ <span id="question-number">1</span>/<span id="question-max">10</span></span>
+                    <button type="button" onclick="replayAudio()" class="replay-button text-indigo-600 hover:text-indigo-800 bg-indigo-100 hover:bg-indigo-200 rounded-full transition-colors" title="ฟังคำถามซ้ำ" aria-label="ฟังคำถามซ้ำ">🔊</button>
+                </div>
+                <h2 id="question-text" class="question-title font-semibold text-indigo-950">คำถามจะแสดงที่นี่</h2>
             </div>
 
             <!-- Money Display Area -->
@@ -400,28 +533,28 @@
 
         <!-- SCREEN: GRAB MONEY -->
         <section id="screen-grab" class="hidden p-6 flex-col items-center min-h-[520px] w-full">
-            <div class="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-4 w-full mb-4 text-center shadow-sm relative">
-                <span class="absolute top-2 left-4 text-yellow-500 font-bold">ข้อที่ <span id="grab-question-number">1</span>/<span id="grab-max-question">5</span></span>
-                <button type="button" onclick="replayGrabAudio()" class="absolute top-2 right-4 text-yellow-500 hover:text-yellow-700 bg-yellow-100 hover:bg-yellow-200 p-2 rounded-full transition-colors" title="ฟังคำถามซ้ำ">
-                    🔊
-                </button>
-                <h2 id="grab-question-text" class="text-xl md:text-2xl font-bold text-yellow-900 mt-4">หยิบเงินให้ได้ 0 บาท</h2>
+            <div class="question-panel bg-yellow-50 border-2 border-yellow-200 rounded-2xl w-full mb-5 text-center shadow-sm">
+                <div class="question-toolbar">
+                    <span class="question-count text-yellow-700 font-semibold">ข้อที่ <span id="grab-question-number">1</span>/<span id="grab-max-question">5</span></span>
+                    <button type="button" onclick="replayGrabAudio()" class="replay-button text-yellow-700 hover:text-yellow-900 bg-yellow-100 hover:bg-yellow-200 rounded-full transition-colors" title="ฟังคำถามซ้ำ" aria-label="ฟังคำถามซ้ำ">🔊</button>
+                </div>
+                <h2 id="grab-question-text" class="question-title font-semibold text-yellow-950">หยิบเงินให้ได้ 0 บาท</h2>
             </div>
 
-            <div class="flex flex-col md:flex-row gap-4 w-full">
+            <div class="grab-layout">
                 <!-- Table (Source) -->
-                <div class="flex-1 bg-orange-50 border-2 border-orange-200 rounded-xl p-4 flex flex-col">
-                    <h3 class="text-orange-900 font-semibold mb-2 text-center">💰 เงินบนโต๊ะ</h3>
-                    <p class="text-[11px] text-orange-700/70 text-center border-b-2 border-orange-200 pb-2 mb-3">แตะ หรือจีบนิ้วเพื่อหยิบ</p>
+                <div class="grab-zone-panel bg-orange-50 border-2 border-orange-200 rounded-xl flex flex-col">
+                    <h3 class="zone-title text-orange-950 font-semibold mb-2 text-center">💰 เงินบนโต๊ะ</h3>
+                    <p class="zone-help text-orange-800/80 text-center border-b-2 border-orange-200 pb-3 mb-4">แตะ หรือจีบนิ้วเพื่อหยิบ</p>
                     <div id="grab-table-area" class="flex flex-wrap gap-3 justify-center items-center flex-1 min-h-[170px] content-start rounded-lg" data-drop-zone="table">
                         <!-- Money injected here -->
                     </div>
                 </div>
 
                 <!-- Tray (Destination) -->
-                <div class="flex-1 bg-green-50 border-2 border-green-200 rounded-xl p-4 flex flex-col">
-                    <h3 class="text-green-900 font-semibold mb-2 text-center">🧺 ตะกร้าของหนู</h3>
-                    <p class="text-[11px] text-green-700/70 text-center border-b-2 border-green-200 pb-2 mb-3">วางเงินที่เลือกไว้ตรงนี้</p>
+                <div class="grab-zone-panel bg-green-50 border-2 border-green-200 rounded-xl flex flex-col">
+                    <h3 class="zone-title text-green-950 font-semibold mb-2 text-center">🧺 ตะกร้าของหนู</h3>
+                    <p class="zone-help text-green-800/80 text-center border-b-2 border-green-200 pb-3 mb-4">วางเงินที่เลือกไว้ตรงนี้</p>
                     <div id="grab-tray-area" class="flex flex-wrap gap-3 justify-center items-center flex-1 min-h-[170px] content-start rounded-lg" data-drop-zone="tray">
                         <!-- Grabbed money injected here -->
                     </div>
@@ -429,7 +562,7 @@
             </div>
 
             <div class="mt-6 w-full max-w-sm">
-                <button type="button" id="btn-submit-grab" onclick="checkGrabAnswer()" class="btn-choice w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-3 px-12 rounded-full text-xl shadow-md border-2 border-yellow-500">
+                <button type="button" id="btn-submit-grab" onclick="checkGrabAnswer()" class="btn-choice w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-950 font-bold py-4 px-10 rounded-full text-2xl shadow-md border-2 border-yellow-500">
                     ส่งคำตอบ 📤
                 </button>
             </div>
@@ -438,10 +571,10 @@
         <!-- SCREEN: SUMMARY -->
         <section id="screen-summary" class="hidden p-8 flex-col items-center justify-center min-h-[520px]">
             <img src="https://api.iconify.design/noto:trophy.svg" alt="ถ้วยรางวัล" class="w-32 h-32 mb-4 float-soft">
-            <h2 class="text-4xl font-semibold text-center mb-2 text-amber-500">จบเกมแล้ว!</h2>
-            <p class="text-2xl text-gray-700 mb-8">หนูทำได้ <span id="final-score" class="font-bold text-pink-600 text-4xl">0</span> เต็ม <span id="max-score-display">10</span> คะแนน</p>
+            <h2 class="screen-title font-semibold text-center mb-3 text-amber-500">จบเกมแล้ว!</h2>
+            <p class="text-2xl md:text-3xl leading-relaxed text-center text-gray-700 mb-8">หนูทำได้ <span id="final-score" class="font-bold text-pink-600 text-4xl md:text-5xl">0</span> เต็ม <span id="max-score-display">10</span> คะแนน</p>
 
-            <button type="button" onclick="goToHome()" class="btn-choice bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xl font-bold py-4 px-12 rounded-full shadow-lg hover:shadow-xl">
+            <button type="button" onclick="goToHome()" class="btn-choice bg-gradient-to-r from-pink-500 to-purple-500 text-white text-2xl font-bold py-4 px-12 rounded-full shadow-lg hover:shadow-xl">
                 เล่นอีกครั้ง
             </button>
         </section>
@@ -449,11 +582,11 @@
         <!-- OVERLAY: FEEDBACK -->
         <div id="overlay-feedback" class="hidden absolute inset-0 bg-white/90 z-20 flex-col items-center justify-center backdrop-blur-sm rounded-b-3xl">
             <div id="feedback-icon" class="text-8xl mb-4 animate-bounce-in">✅</div>
-            <h2 id="feedback-text" class="text-3xl font-bold mb-6 text-green-500">ถูกต้องเก่งมาก!</h2>
-            <button type="button" id="btn-next" onclick="nextQuestion()" class="btn-choice bg-blue-500 text-white font-bold py-3 px-8 rounded-full text-xl shadow-md hover:bg-blue-600">
+            <h2 id="feedback-text" class="text-3xl md:text-4xl leading-relaxed text-center font-bold mb-6 text-green-500">ถูกต้องเก่งมาก!</h2>
+            <button type="button" id="btn-next" onclick="nextQuestion()" class="btn-choice bg-blue-500 text-white font-bold py-4 px-10 rounded-full text-2xl shadow-md hover:bg-blue-600">
                 ข้อต่อไป ➡️
             </button>
-            <button type="button" onclick="goToHome()" class="mt-4 px-4 py-2 rounded-full text-sm text-gray-500 hover:text-purple-700 hover:bg-purple-50">← กลับหน้าแรก</button>
+            <button type="button" onclick="goToHome()" class="mt-4 px-5 py-3 rounded-full text-base md:text-lg text-gray-600 hover:text-purple-700 hover:bg-purple-50">← กลับหน้าแรก</button>
         </div>
 
     </main>
@@ -509,15 +642,15 @@
         // Crop coordinates point to the user-provided Thai currency reference image.
         // The source is shown as a specimen for classroom use.
         const currencyData = [
-            { val: 1000, type: 'bill', num: '1,000', name: 'ธนบัตรหนึ่งพันบาท', crop: { x: 249, y: 404, w: 330, h: 149 } },
-            { val: 500, type: 'bill', num: '500', name: 'ธนบัตรห้าร้อยบาท', crop: { x: 398, y: 261, w: 280, h: 130 } },
-            { val: 100, type: 'bill', num: '100', name: 'ธนบัตรหนึ่งร้อยบาท', crop: { x: 122, y: 261, w: 271, h: 130 } },
-            { val: 50, type: 'bill', num: '50', name: 'ธนบัตรห้าสิบบาท', crop: { x: 399, y: 114, w: 261, h: 134 } },
-            { val: 20, type: 'bill', num: '20', name: 'ธนบัตรยี่สิบบาท', crop: { x: 142, y: 114, w: 249, h: 134 } },
-            { val: 10, type: 'coin', num: '10', name: 'เหรียญสิบบาท', crop: { x: 694, y: 112, w: 118, h: 118 } },
-            { val: 5, type: 'coin', num: '5', name: 'เหรียญห้าบาท', crop: { x: 930, y: 115, w: 114, h: 114 } },
-            { val: 2, type: 'coin', num: '2', name: 'เหรียญสองบาท', crop: { x: 700, y: 243, w: 100, h: 100 } },
-            { val: 1, type: 'coin', num: '1', name: 'เหรียญหนึ่งบาท', crop: { x: 931, y: 242, w: 100, h: 100 } }
+            { val: 1000, type: 'bill', num: '1,000', name: 'ธนบัตรหนึ่งพันบาท', crop: { x: 251, y: 406, w: 326, h: 145 } },
+            { val: 500, type: 'bill', num: '500', name: 'ธนบัตรห้าร้อยบาท', crop: { x: 401, y: 263, w: 275, h: 126 } },
+            { val: 100, type: 'bill', num: '100', name: 'ธนบัตรหนึ่งร้อยบาท', crop: { x: 123, y: 263, w: 267, h: 127 } },
+            { val: 50, type: 'bill', num: '50', name: 'ธนบัตรห้าสิบบาท', crop: { x: 400, y: 116, w: 260, h: 130 } },
+            { val: 20, type: 'bill', num: '20', name: 'ธนบัตรยี่สิบบาท', crop: { x: 143, y: 116, w: 248, h: 130 } },
+            { val: 10, type: 'coin', num: '10', name: 'เหรียญสิบบาท', crop: { x: 695, y: 115, w: 116, h: 116 } },
+            { val: 5, type: 'coin', num: '5', name: 'เหรียญห้าบาท', crop: { x: 934, y: 119, w: 106, h: 106 } },
+            { val: 2, type: 'coin', num: '2', name: 'เหรียญสองบาท', crop: { x: 701, y: 244, w: 97, h: 97 } },
+            { val: 1, type: 'coin', num: '1', name: 'เหรียญหนึ่งบาท', crop: { x: 935, y: 243, w: 96, h: 96 } }
         ];
 
         function escapeHTML(value) {
@@ -528,8 +661,8 @@
 
         function createMoneyVisualHTML(item, size = 'normal', showValue = true) {
             const widths = item.type === 'bill'
-                ? { tiny: 88, small: 112, normal: 166 }
-                : { tiny: 56, small: 66, normal: 78 };
+                ? { tiny: 100, small: 132, normal: 184 }
+                : { tiny: 62, small: 76, normal: 90 };
             const width = widths[size] || widths.normal;
             const scale = width / item.crop.w;
             const height = item.crop.h * scale;
@@ -580,8 +713,8 @@
             currencyData.forEach(item => {
                 const btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = 'btn-choice bg-white/85 hover:bg-white border border-white rounded-xl p-3 flex flex-col items-center justify-between gap-2 min-h-[122px]';
-                btn.innerHTML = `${createMoneyVisualHTML(item, 'tiny', false)}<span class="text-xs font-semibold text-gray-700">${escapeHTML(item.name)}</span>`;
+                btn.className = 'currency-sound-card btn-choice border border-white rounded-xl p-3 flex flex-col items-center justify-between gap-3 min-h-[142px]';
+                btn.innerHTML = `${createMoneyVisualHTML(item, 'tiny', false)}<span class="text-base md:text-lg leading-snug font-semibold text-gray-800">${escapeHTML(item.name)}</span>`;
                 btn.setAttribute('aria-label', `ฟังเสียง ${item.name}`);
                 btn.onclick = () => speak(item.name);
                 board.appendChild(btn);
@@ -795,12 +928,12 @@
                 els.score.innerText = score;
                 els.feedbackIcon.innerText = '🎉';
                 els.feedbackText.innerText = 'ถูกต้อง เก่งมาก!';
-                els.feedbackText.className = 'text-3xl font-bold mb-6 text-green-500 text-center';
+                els.feedbackText.className = 'text-3xl md:text-4xl leading-relaxed font-bold mb-6 text-green-500 text-center';
                 speak("ถูกต้อง เก่งมากค่ะ");
             } else {
                 els.feedbackIcon.innerText = '❌';
                 els.feedbackText.innerText = `ยังไม่ถูกจ้า\nหนูหยิบมา ${totalGrabbed} บาท (ต้องหยิบ ${currentCorrectAnswer} บาท)`;
-                els.feedbackText.className = 'text-2xl font-bold mb-6 text-red-500 text-center px-4 whitespace-pre-line';
+                els.feedbackText.className = 'text-2xl md:text-3xl leading-relaxed font-bold mb-6 text-red-500 text-center px-4 whitespace-pre-line';
                 speak(`ยังไม่ถูกจ้า หนูหยิบมา ${totalGrabbed} บาท ต้องหยิบ ${currentCorrectAnswer} บาท`);
             }
 
@@ -843,7 +976,7 @@
                 // โหมดทอนเงิน แสดงเงินที่จ่าย
                 els.moneyDisplay.innerHTML = `
                     <div class="flex flex-col items-center">
-                        <span class="text-sm text-gray-500 mb-2">เงินที่จ่าย:</span>
+                        <span class="text-lg md:text-xl font-medium text-gray-600 mb-3">เงินที่จ่าย:</span>
                         ${createMoneyHTML(q.pay, 1)}
                     </div>
                 `;
@@ -854,7 +987,7 @@
             q.choices.forEach(c => {
                 let btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = 'btn-choice bg-white/90 hover:bg-indigo-50 text-indigo-800 font-semibold py-4 rounded-xl text-xl border-2 border-indigo-200 shadow-sm';
+                btn.className = 'answer-choice btn-choice bg-white/90 hover:bg-indigo-50 text-indigo-900 font-semibold rounded-xl border-2 border-indigo-200 shadow-sm';
                 btn.innerText = `${c} บาท`;
                 btn.setAttribute('aria-label', `ตอบ ${c} บาท`);
                 btn.onclick = () => checkAnswer(c, btn);
@@ -880,12 +1013,12 @@
                 els.score.innerText = score;
                 els.feedbackIcon.innerText = '🎉';
                 els.feedbackText.innerText = 'ถูกต้อง เก่งมาก!';
-                els.feedbackText.className = 'text-3xl font-bold mb-6 text-green-500';
+                els.feedbackText.className = 'text-3xl md:text-4xl leading-relaxed font-bold mb-6 text-green-500 text-center';
                 speak("ถูกต้อง เก่งมากค่ะ");
             } else {
                 els.feedbackIcon.innerText = '❌';
                 els.feedbackText.innerText = `ผิดจ้า คำตอบคือ ${currentCorrectAnswer} บาท`;
-                els.feedbackText.className = 'text-3xl font-bold mb-6 text-red-500';
+                els.feedbackText.className = 'text-3xl md:text-4xl leading-relaxed font-bold mb-6 text-red-500 text-center';
                 speak(`ผิดจ้า คำตอบที่ถูกคือ ${currentCorrectAnswer} บาท`);
             }
 
