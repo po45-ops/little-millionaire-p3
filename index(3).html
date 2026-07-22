@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#6d28d9">
+    <meta name="description" content="เกมเศรษฐีน้อย ป.3 ฝึกนับเงิน ทอนเงิน และหยิบเงินไทย พร้อมโหมด AR Camera">
     <title>เกมเศรษฐีน้อย ป.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
+
     <!-- MediaPipe Libraries for Hand Tracking -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
@@ -14,173 +16,379 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
     <style>
+        :root {
+            --violet: #6d28d9;
+            --pink: #ec4899;
+            --indigo: #4338ca;
+            --ink: #25213a;
+            --glass: rgba(255, 255, 255, 0.93);
+        }
+
+        * { box-sizing: border-box; }
+
         body {
             font-family: 'Mitr', sans-serif;
-            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            background:
+                radial-gradient(circle at 15% 12%, rgba(255,255,255,.9) 0 5%, transparent 26%),
+                radial-gradient(circle at 85% 86%, rgba(255,255,255,.68) 0 4%, transparent 25%),
+                linear-gradient(135deg, #b7f0e9 0%, #d8d0ff 47%, #ffd6e6 100%);
             min-height: 100vh;
+            min-height: 100dvh;
             margin: 0;
             user-select: none;
+            overflow-x: hidden;
+            color: var(--ink);
         }
 
-        /* Animations */
+        body::before,
+        body::after {
+            content: '฿';
+            position: fixed;
+            z-index: -1;
+            color: rgba(255,255,255,.45);
+            font-size: clamp(9rem, 22vw, 18rem);
+            font-weight: 600;
+            line-height: 1;
+            filter: blur(.3px);
+            pointer-events: none;
+        }
+        body::before { left: -2rem; top: -3rem; transform: rotate(-14deg); }
+        body::after { right: -1rem; bottom: -5rem; transform: rotate(12deg); }
+
         @keyframes bounceIn {
-            0% { transform: scale(0.8); opacity: 0; }
-            60% { transform: scale(1.05); opacity: 1; }
-            100% { transform: scale(1); }
+            0% { transform: translateY(18px) scale(.96); opacity: 0; }
+            70% { transform: translateY(-3px) scale(1.01); opacity: 1; }
+            100% { transform: translateY(0) scale(1); opacity: 1; }
         }
-        .animate-bounce-in { animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        
-        @keyframes pulse-fast {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+        @keyframes floatSoft {
+            0%, 100% { transform: translateY(0) rotate(-2deg); }
+            50% { transform: translateY(-9px) rotate(2deg); }
         }
-        .animate-pulse-fast { animation: pulse-fast 1s infinite; }
+        @keyframes pulseRing {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,.45); }
+            50% { box-shadow: 0 0 0 9px rgba(34,197,94,0); }
+        }
+        .animate-bounce-in { animation: bounceIn .5s cubic-bezier(.2,.8,.2,1) forwards; }
+        .float-soft { animation: floatSoft 3.2s ease-in-out infinite; }
 
-        /* Custom Button Styles */
+        #game-container {
+            background: var(--glass);
+            border: 1px solid rgba(255,255,255,.8);
+            box-shadow: 0 30px 80px rgba(70, 45, 120, .22), 0 8px 24px rgba(50, 40, 90, .12);
+            transition: background .3s ease, box-shadow .3s ease, transform .3s ease;
+        }
+
+        .app-header {
+            background: linear-gradient(110deg, #db2777 0%, #7c3aed 52%, #4338ca 100%);
+            box-shadow: inset 0 -1px 0 rgba(255,255,255,.18);
+        }
+
         .btn-choice {
-            transition: all 0.2s;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+            box-shadow: 0 5px 14px rgba(45, 35, 80, .1);
+            touch-action: manipulation;
         }
-        .btn-choice:hover:not(:disabled) {
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        .btn-choice:hover:not(:disabled),
+        .btn-choice:focus-visible:not(:disabled) {
+            transform: translateY(-3px) scale(1.015);
+            box-shadow: 0 14px 28px rgba(45, 35, 80, .16);
+            outline: none;
         }
-        .btn-choice:active:not(:disabled) {
-            transform: translateY(2px);
-            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
-        }
+        .btn-choice:active:not(:disabled) { transform: translateY(1px) scale(.99); }
 
-        /* Money Elements (CSS Fallback for generated money) */
-        .bill {
-            width: 140px; height: 65px;
-            border-radius: 4px;
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 4px 8px; font-weight: bold; font-size: 1.2rem;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.2) 10px, rgba(255,255,255,0.2) 20px);
-            border: 1px solid rgba(0,0,0,0.1);
+        .mode-card {
             position: relative;
+            min-height: 194px;
+            overflow: hidden;
+            text-align: left;
+            isolation: isolate;
         }
-        .bill::after {
-            content: 'รัฐบาลไทย'; position: absolute; top: 2px; left: 50%; transform: translateX(-50%);
-            font-size: 0.5rem; opacity: 0.7;
+        .mode-card::after {
+            content: '';
+            position: absolute;
+            width: 94px;
+            height: 94px;
+            right: -28px;
+            bottom: -32px;
+            border-radius: 999px;
+            background: currentColor;
+            opacity: .08;
+            z-index: -1;
         }
-        .coin {
-            border-radius: 50%;
-            display: flex; justify-content: center; align-items: center;
-            font-weight: bold; box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            text-shadow: 1px 1px 0px rgba(255,255,255,0.5);
+        .mode-icon {
+            width: 54px;
+            height: 54px;
+            display: grid;
+            place-items: center;
+            border-radius: 17px;
+            background: rgba(255,255,255,.78);
+            box-shadow: 0 8px 20px rgba(40,30,70,.1);
+        }
+        .mode-tag {
+            display: inline-flex;
+            align-items: center;
+            min-height: 25px;
+            padding: 3px 9px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.66);
+            font-size: .69rem;
+            font-weight: 600;
+            letter-spacing: .04em;
         }
 
-        /* Camera & Hand Canvas Styles */
-        #hand-canvas {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            pointer-events: none; /* Let clicks pass through */
-            z-index: 9999;
+        .money-photo {
+            display: inline-block;
+            flex: 0 0 auto;
+            background-repeat: no-repeat;
+            background-color: #f5f1e8;
+            border: 1px solid rgba(66, 51, 37, .2);
+            box-shadow: 0 7px 14px rgba(47, 37, 25, .2), inset 0 0 0 1px rgba(255,255,255,.3);
+            overflow: hidden;
+            vertical-align: middle;
         }
+        .money-photo.bill-photo { border-radius: 5px; }
+        .money-photo.coin-photo {
+            border-radius: 999px;
+            box-shadow: 0 7px 13px rgba(47, 37, 25, .24), inset 0 0 0 1px rgba(255,255,255,.35);
+        }
+        .money-item {
+            position: relative;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        .money-value-chip {
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.92);
+            color: #4c1d95;
+            font-size: .72rem;
+            font-weight: 600;
+            box-shadow: 0 2px 7px rgba(40,30,60,.12);
+        }
+        .grab-money-button { border-radius: 12px; padding: 5px; }
+        .grab-money-button:hover .money-photo { box-shadow: 0 10px 20px rgba(76,29,149,.28); }
+
+        .ar-focus {
+            outline: 5px solid rgba(34,197,94,.9) !important;
+            outline-offset: 5px;
+            animation: pulseRing 1s ease-in-out infinite;
+        }
+        .ar-picked { opacity: .48; transform: scale(.94); }
+
         #camera-preview-container {
-            position: fixed; bottom: 20px; right: 20px;
-            width: 160px; height: 120px;
-            border-radius: 12px; overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            z-index: 9998; border: 3px solid white;
-            background: #000;
-            transform: scaleX(-1); /* Mirror */
-            transition: all 0.3s;
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            z-index: 0;
+            background: #111827;
+            pointer-events: none;
         }
-        #webcam { width: 100%; height: 100%; object-fit: cover; }
+        #webcam {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+        #camera-preview-container::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(15,23,42,.15), rgba(15,23,42,.04) 45%, rgba(15,23,42,.23));
+        }
+        #hand-canvas {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 60;
+        }
+        #ar-hud {
+            position: fixed;
+            left: 50%;
+            bottom: max(12px, env(safe-area-inset-bottom));
+            transform: translateX(-50%);
+            z-index: 70;
+            width: min(680px, calc(100vw - 24px));
+            padding: 9px 14px;
+            border-radius: 16px;
+            background: rgba(15,23,42,.78);
+            border: 1px solid rgba(255,255,255,.26);
+            color: white;
+            box-shadow: 0 14px 40px rgba(0,0,0,.3);
+            backdrop-filter: blur(14px);
+            text-align: center;
+            font-size: .82rem;
+        }
+        #gesture-ghost {
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 80;
+            pointer-events: none;
+            transform: translate(-50%, -50%) scale(1.08);
+            filter: drop-shadow(0 13px 14px rgba(0,0,0,.32));
+        }
+        #gesture-ghost .money-value-chip { display: none; }
+
+        body.ar-mode::before,
+        body.ar-mode::after { display: none; }
+        body.ar-mode #game-container {
+            background: rgba(255,255,255,.78);
+            border-color: rgba(255,255,255,.7);
+            box-shadow: 0 22px 70px rgba(0,0,0,.3);
+            backdrop-filter: blur(13px);
+        }
+        body.ar-mode #screen-home,
+        body.ar-mode #screen-learning,
+        body.ar-mode #screen-game,
+        body.ar-mode #screen-grab,
+        body.ar-mode #screen-summary { background: rgba(255,255,255,.12); }
+
+        @media (max-width: 700px) {
+            body { padding: 8px !important; align-items: stretch !important; }
+            #game-container { border-radius: 22px !important; }
+            .app-header { padding: 11px !important; border-radius: 22px 22px 0 0 !important; }
+            .mode-card { min-height: 150px; }
+            .money-photo { max-width: 100%; }
+            #screen-grab, #screen-game, #screen-learning { padding: 14px !important; }
+            .ar-long-label { display: none; }
+        }
+
+        @media (max-height: 740px) {
+            body { justify-content: flex-start !important; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+        }
     </style>
 </head>
 <body class="text-gray-800 flex flex-col items-center justify-center p-4">
 
-    <!-- Camera Preview and Hand Cursor Canvas -->
-    <canvas id="hand-canvas" class="hidden"></canvas>
+    <!-- Full-screen camera background for Augmented Reality (AR) -->
     <div id="camera-preview-container" class="hidden">
-        <video id="webcam" autoplay playsinline></video>
+        <video id="webcam" playsinline muted aria-hidden="true"></video>
+    </div>
+    <canvas id="hand-canvas" class="hidden" aria-hidden="true"></canvas>
+    <div id="gesture-ghost" class="hidden" aria-hidden="true"></div>
+    <div id="ar-hud" class="hidden" role="status" aria-live="polite">
+        <span class="inline-flex items-center gap-2 font-semibold text-emerald-300 mr-2"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> AR ACTIVE</span>
+        <span id="ar-status-text">ชี้เพื่อเลือก • จีบนิ้วโป้งกับนิ้วชี้เพื่อกดหรือหยิบ</span>
     </div>
 
     <!-- Main Game Container -->
-    <div id="game-container" class="w-full max-w-3xl bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden animate-bounce-in relative z-10">
-        
+    <main id="game-container" class="w-full max-w-5xl rounded-3xl overflow-hidden animate-bounce-in relative z-10" aria-label="เกมเศรษฐีน้อย ป.3">
+
         <!-- Header -->
-        <div class="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 p-4 text-white flex justify-between items-center rounded-t-3xl">
-            <h1 class="text-xl md:text-2xl font-bold flex items-center gap-2 cursor-pointer" onclick="goToHome()">
-                💰 เกมเศรษฐีน้อย ป.3
-            </h1>
-            <div class="flex items-center gap-2">
-                <button id="btn-toggle-cam" onclick="toggleCameraMode()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-md transition-colors border border-indigo-400 flex items-center gap-1">
-                    📷 เปิดกล้องจับมือ
+        <header class="app-header p-4 text-white flex flex-wrap justify-between items-center gap-3 rounded-t-3xl">
+            <div class="flex items-center gap-2 min-w-0">
+                <button type="button" id="btn-back" onclick="goBack()" class="hidden btn-choice shrink-0 bg-white/18 hover:bg-white/28 border border-white/30 text-white px-3 py-2 rounded-xl font-medium" aria-label="ย้อนกลับหน้าแรก">
+                    ← <span class="hidden sm:inline">ย้อนกลับ</span>
                 </button>
-                <div id="score-display" class="hidden text-xl font-semibold bg-white/20 px-4 py-1 rounded-full">
-                    คะแนน: <span id="score">0</span>/10
+                <button type="button" onclick="goToHome()" class="text-left min-w-0 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-white" aria-label="ไปหน้าแรก">
+                    <span class="text-lg md:text-2xl font-semibold flex items-center gap-2 leading-tight"><span aria-hidden="true">💰</span> เกมเศรษฐีน้อย ป.3</span>
+                    <span class="block text-[11px] md:text-xs text-white/75 font-light ml-8">Money Skills Adventure</span>
+                </button>
+            </div>
+            <div class="flex items-center gap-2 ml-auto">
+                <button type="button" id="btn-toggle-cam" onclick="toggleCameraMode()" class="btn-choice bg-white/15 hover:bg-white/25 text-white px-3 py-2 rounded-xl text-sm font-medium border border-white/30 flex items-center gap-2" aria-pressed="false">
+                    <span id="cam-button-icon" class="text-lg" aria-hidden="true">📷</span>
+                    <span class="text-left leading-tight">
+                        <strong id="cam-button-title" class="block text-xs md:text-sm">เปิด AR Camera</strong>
+                        <small class="ar-long-label block text-[9px] text-white/70 font-light">Augmented Reality</small>
+                    </span>
+                </button>
+                <div id="score-display" class="hidden text-sm md:text-base font-semibold bg-white/18 border border-white/20 px-3 py-2 rounded-xl whitespace-nowrap" aria-live="polite">
+                    ⭐ <span id="score">0</span>/<span id="score-max">10</span>
                 </div>
             </div>
-        </div>
+        </header>
 
         <!-- SCREEN: HOME -->
-        <div id="screen-home" class="p-8 flex flex-col items-center justify-center min-h-[400px]">
-            <img src="https://api.iconify.design/noto:money-bag.svg" alt="Money Bag" class="w-32 h-32 mb-4 animate-bounce">
-            <h2 class="text-3xl font-bold text-center mb-8 text-purple-700">เลือกโหมดการเรียนรู้</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full max-w-4xl">
-                <button onclick="openLearningRoom()" class="btn-choice bg-blue-100 hover:bg-blue-200 border-2 border-blue-400 text-blue-800 p-6 rounded-2xl flex flex-col items-center gap-3">
-                    <span class="text-4xl">📖</span>
-                    <span class="text-lg font-bold">ห้องเรียนรู้</span>
-                    <span class="text-sm text-center">ดูรูปธนบัตรและเหรียญของจริง</span>
+        <section id="screen-home" class="p-5 md:p-8 flex flex-col items-center justify-center min-h-[520px]">
+            <div class="w-full grid md:grid-cols-[1fr_auto] items-center gap-5 mb-7">
+                <div>
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-100 text-purple-700 text-xs font-semibold mb-3">✨ เกมฝึกทักษะการเงินสำหรับ ป.3</span>
+                    <h2 class="text-3xl md:text-4xl font-semibold leading-tight text-purple-950">เรียนรู้เงินจริงไทย<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-violet-600">สนุกทั้งแตะและใช้มือ</span></h2>
+                    <p class="mt-3 text-gray-600 max-w-2xl text-sm md:text-base">ฝึกดูธนบัตร–เหรียญ นับเงิน ทอนเงิน และหยิบเงินให้ตรงจำนวน พร้อมโหมดกล้องความจริงเสริม</p>
+                </div>
+                <div class="hidden md:grid place-items-center w-36 h-36 rounded-[2.2rem] bg-gradient-to-br from-yellow-100 to-pink-100 border border-white shadow-lg float-soft">
+                    <img src="https://api.iconify.design/noto:money-bag.svg" alt="ถุงเงิน" class="w-24 h-24">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+                <button type="button" onclick="openLearningRoom()" class="mode-card btn-choice bg-blue-50 hover:bg-blue-100 border-2 border-blue-200 text-blue-900 p-5 rounded-2xl flex flex-col gap-3">
+                    <span class="mode-icon text-3xl" aria-hidden="true">📖</span>
+                    <span class="mode-tag text-blue-700">LEARN</span>
+                    <span class="text-xl font-semibold">ห้องเรียนรู้</span>
+                    <span class="text-sm text-blue-900/70">ดูธนบัตรและเหรียญไทยจากภาพจริง</span>
                 </button>
-                <button onclick="startGame('count')" class="btn-choice bg-green-100 hover:bg-green-200 border-2 border-green-400 text-green-800 p-6 rounded-2xl flex flex-col items-center gap-3">
-                    <span class="text-4xl">🧮</span>
-                    <span class="text-lg font-bold">โหมดนับเงิน</span>
-                    <span class="text-sm text-center">ฝึกนับเงินจากภาพ</span>
+                <button type="button" onclick="startGame('count')" class="mode-card btn-choice bg-emerald-50 hover:bg-emerald-100 border-2 border-emerald-200 text-emerald-900 p-5 rounded-2xl flex flex-col gap-3">
+                    <span class="mode-icon text-3xl" aria-hidden="true">🧮</span>
+                    <span class="mode-tag text-emerald-700">COUNT</span>
+                    <span class="text-xl font-semibold">โหมดนับเงิน</span>
+                    <span class="text-sm text-emerald-900/70">รวมมูลค่าจากภาพเงินจริงให้ถูกต้อง</span>
                 </button>
-                <button onclick="startGame('change')" class="btn-choice bg-orange-100 hover:bg-orange-200 border-2 border-orange-400 text-orange-800 p-6 rounded-2xl flex flex-col items-center gap-3">
-                    <span class="text-4xl">🛒</span>
-                    <span class="text-lg font-bold">โหมดทอนเงิน</span>
-                    <span class="text-sm text-center">จำลองการซื้อของ</span>
+                <button type="button" onclick="startGame('change')" class="mode-card btn-choice bg-orange-50 hover:bg-orange-100 border-2 border-orange-200 text-orange-900 p-5 rounded-2xl flex flex-col gap-3">
+                    <span class="mode-icon text-3xl" aria-hidden="true">🛒</span>
+                    <span class="mode-tag text-orange-700">CHANGE</span>
+                    <span class="text-xl font-semibold">โหมดทอนเงิน</span>
+                    <span class="text-sm text-orange-900/70">ฝึกซื้อของและคำนวณเงินทอน</span>
                 </button>
-                <button onclick="startGame('grab')" class="btn-choice bg-yellow-100 hover:bg-yellow-200 border-2 border-yellow-400 text-yellow-800 p-6 rounded-2xl flex flex-col items-center gap-3">
-                    <span class="text-4xl">🤲</span>
-                    <span class="text-lg font-bold">โหมดหยิบเงิน</span>
-                    <span class="text-sm text-center">หยิบเงินวางบนโต๊ะให้ตรงเป้า</span>
+                <button type="button" onclick="startGame('grab')" class="mode-card btn-choice bg-amber-50 hover:bg-amber-100 border-2 border-amber-200 text-amber-900 p-5 rounded-2xl flex flex-col gap-3">
+                    <span class="mode-icon text-3xl" aria-hidden="true">🤏</span>
+                    <span class="mode-tag text-amber-700">GRAB</span>
+                    <span class="text-xl font-semibold">โหมดหยิบเงิน</span>
+                    <span class="text-sm text-amber-900/70">แตะ หรือใช้ท่าจีบนิ้วหยิบใส่ตะกร้า</span>
                 </button>
             </div>
-        </div>
+            <button type="button" onclick="toggleCameraMode()" class="btn-choice mt-6 w-full md:w-auto px-5 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center gap-3">
+                <span class="text-2xl" aria-hidden="true">🖐️</span>
+                <span class="text-left"><strong class="block text-sm">ลองโหมด AR — Augmented Reality</strong><small class="block text-white/65">เห็นตัวเองเป็นพื้นหลัง แล้วชี้หรือจีบนิ้วเพื่อเล่น</small></span>
+            </button>
+        </section>
 
         <!-- SCREEN: LEARNING ROOM -->
-        <div id="screen-learning" class="hidden p-6 flex-col items-center min-h-[400px] max-h-[70vh] overflow-y-auto">
-            <div class="w-full flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold text-blue-700">📖 ห้องเรียนรู้เรื่องเงิน</h2>
-                <button onclick="goToHome()" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-full font-medium">กลับหน้าแรก</button>
-            </div>
-            
-            <p class="text-gray-600 mb-4 text-center">ดูภาพรวมของธนบัตรและเหรียญไทย แล้วลองกดปุ่มด้านล่างเพื่อฟังเสียงเรียกชื่อ</p>
-            
-            <!-- ใช้รูปภาพจริงตามที่ผู้ใช้ร้องขอ -->
-            <div class="bg-gray-100 p-2 rounded-xl shadow-inner mb-6 w-full flex justify-center">
-                <img src="image_fe1407.jpg" alt="ธนบัตรและเหรียญไทย" class="max-w-full h-auto rounded-lg shadow-md" onerror="this.src='https://placehold.co/800x400/eeeeee/999999?text=Image+Not+Found'">
+        <section id="screen-learning" class="hidden p-6 flex-col items-center min-h-[520px] max-h-[78vh] overflow-y-auto">
+            <div class="w-full mb-4">
+                <span class="mode-tag bg-blue-100 text-blue-700 mb-2">LEARNING ROOM</span>
+                <h2 class="text-2xl md:text-3xl font-semibold text-blue-900">📖 ห้องเรียนรู้เรื่องเงินไทย</h2>
             </div>
 
+            <p class="text-gray-600 mb-4 text-center">ดูภาพธนบัตรและเหรียญไทย แล้วเลือกภาพย่อยด้านล่างเพื่อฟังชื่อและมูลค่า</p>
+
+            <figure class="bg-white/70 p-2 rounded-2xl shadow-inner mb-6 w-full flex flex-col items-center border border-white">
+                <img src="assets/thai-money-reference.png" alt="ภาพตัวอย่างธนบัตรไทยชนิด 20 50 100 500 และ 1,000 บาท พร้อมเหรียญ 1 2 5 และ 10 บาท" class="max-w-full h-auto rounded-xl shadow-md">
+                <figcaption class="text-[11px] text-gray-500 mt-2 text-center">ภาพตัวอย่างเพื่อการศึกษา ไม่สามารถใช้แทนเงินจริงได้</figcaption>
+            </figure>
+
             <div class="w-full">
-                <h3 class="font-bold text-lg mb-2 text-gray-700">ทดลองฟังเสียง (กดปุ่ม)</h3>
-                <div class="flex flex-wrap gap-2 justify-center" id="sound-board">
+                <h3 class="font-semibold text-lg mb-3 text-gray-700">แตะภาพเพื่อฟังเสียง</h3>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" id="sound-board">
                     <!-- ปุ่มถูกสร้างด้วย JS -->
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- SCREEN: GAME (QUIZ) -->
-        <div id="screen-game" class="hidden p-6 flex-col items-center min-h-[450px]">
+        <section id="screen-game" class="hidden p-6 flex-col items-center min-h-[520px]">
             <!-- Question Box -->
-            <div class="bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-4 w-full mb-6 text-center shadow-sm relative">
-                <span class="absolute top-2 left-4 text-indigo-400 font-bold">ข้อที่ <span id="question-number">1</span>/10</span>
-                <button onclick="replayAudio()" class="absolute top-2 right-4 text-indigo-500 hover:text-indigo-700 bg-indigo-100 hover:bg-indigo-200 p-2 rounded-full transition-colors" title="ฟังคำถามซ้ำ">
+            <div class="bg-indigo-50/90 border-2 border-indigo-200 rounded-2xl p-5 w-full mb-6 text-center shadow-sm relative">
+                <span class="absolute top-2 left-4 text-indigo-500 font-semibold text-sm">ข้อที่ <span id="question-number">1</span>/<span id="question-max">10</span></span>
+                <button type="button" onclick="replayAudio()" class="absolute top-2 right-4 text-indigo-500 hover:text-indigo-700 bg-indigo-100 hover:bg-indigo-200 p-2 rounded-full transition-colors" title="ฟังคำถามซ้ำ">
                     🔊
                 </button>
-                <h2 id="question-text" class="text-xl md:text-2xl font-bold text-indigo-900 mt-4">คำถามจะแสดงที่นี่</h2>
+                <h2 id="question-text" class="text-xl md:text-2xl font-semibold text-indigo-950 mt-4">คำถามจะแสดงที่นี่</h2>
             </div>
 
             <!-- Money Display Area -->
-            <div id="money-display" class="flex flex-wrap justify-center gap-4 mb-8 min-h-[120px] p-4 bg-gray-50 rounded-xl w-full border border-gray-100 shadow-inner">
+            <div id="money-display" class="flex flex-wrap justify-center items-end gap-5 mb-8 min-h-[150px] p-5 bg-white/70 rounded-2xl w-full border border-white shadow-inner">
                 <!-- Money elements injected here by JS -->
             </div>
 
@@ -188,13 +396,13 @@
             <div id="choices-container" class="grid grid-cols-2 gap-4 w-full max-w-lg">
                 <!-- Buttons injected by JS -->
             </div>
-        </div>
+        </section>
 
         <!-- SCREEN: GRAB MONEY -->
-        <div id="screen-grab" class="hidden p-6 flex-col items-center min-h-[450px] w-full">
+        <section id="screen-grab" class="hidden p-6 flex-col items-center min-h-[520px] w-full">
             <div class="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-4 w-full mb-4 text-center shadow-sm relative">
                 <span class="absolute top-2 left-4 text-yellow-500 font-bold">ข้อที่ <span id="grab-question-number">1</span>/<span id="grab-max-question">5</span></span>
-                <button onclick="replayGrabAudio()" class="absolute top-2 right-4 text-yellow-500 hover:text-yellow-700 bg-yellow-100 hover:bg-yellow-200 p-2 rounded-full transition-colors" title="ฟังคำถามซ้ำ">
+                <button type="button" onclick="replayGrabAudio()" class="absolute top-2 right-4 text-yellow-500 hover:text-yellow-700 bg-yellow-100 hover:bg-yellow-200 p-2 rounded-full transition-colors" title="ฟังคำถามซ้ำ">
                     🔊
                 </button>
                 <h2 id="grab-question-text" class="text-xl md:text-2xl font-bold text-yellow-900 mt-4">หยิบเงินให้ได้ 0 บาท</h2>
@@ -203,49 +411,52 @@
             <div class="flex flex-col md:flex-row gap-4 w-full">
                 <!-- Table (Source) -->
                 <div class="flex-1 bg-orange-50 border-2 border-orange-200 rounded-xl p-4 flex flex-col">
-                    <h3 class="text-orange-800 font-bold mb-4 text-center border-b-2 border-orange-200 pb-2">💰 เงินบนโต๊ะ (กดเพื่อหยิบ)</h3>
-                    <div id="grab-table-area" class="flex flex-wrap gap-3 justify-center items-center flex-1 min-h-[150px] content-start">
+                    <h3 class="text-orange-900 font-semibold mb-2 text-center">💰 เงินบนโต๊ะ</h3>
+                    <p class="text-[11px] text-orange-700/70 text-center border-b-2 border-orange-200 pb-2 mb-3">แตะ หรือจีบนิ้วเพื่อหยิบ</p>
+                    <div id="grab-table-area" class="flex flex-wrap gap-3 justify-center items-center flex-1 min-h-[170px] content-start rounded-lg" data-drop-zone="table">
                         <!-- Money injected here -->
                     </div>
                 </div>
 
                 <!-- Tray (Destination) -->
                 <div class="flex-1 bg-green-50 border-2 border-green-200 rounded-xl p-4 flex flex-col">
-                    <h3 class="text-green-800 font-bold mb-4 text-center border-b-2 border-green-200 pb-2">🧺 ตะกร้าของหนู (กดเพื่อคืน)</h3>
-                    <div id="grab-tray-area" class="flex flex-wrap gap-3 justify-center items-center flex-1 min-h-[150px] content-start">
+                    <h3 class="text-green-900 font-semibold mb-2 text-center">🧺 ตะกร้าของหนู</h3>
+                    <p class="text-[11px] text-green-700/70 text-center border-b-2 border-green-200 pb-2 mb-3">วางเงินที่เลือกไว้ตรงนี้</p>
+                    <div id="grab-tray-area" class="flex flex-wrap gap-3 justify-center items-center flex-1 min-h-[170px] content-start rounded-lg" data-drop-zone="tray">
                         <!-- Grabbed money injected here -->
                     </div>
                 </div>
             </div>
-            
+
             <div class="mt-6 w-full max-w-sm">
-                <button id="btn-submit-grab" onclick="checkGrabAnswer()" class="btn-choice w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-3 px-12 rounded-full text-xl shadow-md border-2 border-yellow-500">
+                <button type="button" id="btn-submit-grab" onclick="checkGrabAnswer()" class="btn-choice w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-3 px-12 rounded-full text-xl shadow-md border-2 border-yellow-500">
                     ส่งคำตอบ 📤
                 </button>
             </div>
-        </div>
+        </section>
 
         <!-- SCREEN: SUMMARY -->
-        <div id="screen-summary" class="hidden p-8 flex-col items-center justify-center min-h-[400px]">
-            <img src="https://api.iconify.design/noto:trophy.svg" alt="Trophy" class="w-32 h-32 mb-4 animate-bounce">
-            <h2 class="text-4xl font-bold text-center mb-2 text-yellow-500">จบเกมแล้ว!</h2>
+        <section id="screen-summary" class="hidden p-8 flex-col items-center justify-center min-h-[520px]">
+            <img src="https://api.iconify.design/noto:trophy.svg" alt="ถ้วยรางวัล" class="w-32 h-32 mb-4 float-soft">
+            <h2 class="text-4xl font-semibold text-center mb-2 text-amber-500">จบเกมแล้ว!</h2>
             <p class="text-2xl text-gray-700 mb-8">หนูทำได้ <span id="final-score" class="font-bold text-pink-600 text-4xl">0</span> เต็ม <span id="max-score-display">10</span> คะแนน</p>
-            
-            <button onclick="goToHome()" class="btn-choice bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xl font-bold py-4 px-12 rounded-full shadow-lg hover:shadow-xl">
+
+            <button type="button" onclick="goToHome()" class="btn-choice bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xl font-bold py-4 px-12 rounded-full shadow-lg hover:shadow-xl">
                 เล่นอีกครั้ง
             </button>
-        </div>
+        </section>
 
         <!-- OVERLAY: FEEDBACK -->
-        <div id="overlay-feedback" class="hidden absolute inset-0 bg-white/90 z-20 flex-col items-center justify-center backdrop-blur-sm">
+        <div id="overlay-feedback" class="hidden absolute inset-0 bg-white/90 z-20 flex-col items-center justify-center backdrop-blur-sm rounded-b-3xl">
             <div id="feedback-icon" class="text-8xl mb-4 animate-bounce-in">✅</div>
             <h2 id="feedback-text" class="text-3xl font-bold mb-6 text-green-500">ถูกต้องเก่งมาก!</h2>
-            <button id="btn-next" onclick="nextQuestion()" class="btn-choice bg-blue-500 text-white font-bold py-3 px-8 rounded-full text-xl shadow-md hover:bg-blue-600">
+            <button type="button" id="btn-next" onclick="nextQuestion()" class="btn-choice bg-blue-500 text-white font-bold py-3 px-8 rounded-full text-xl shadow-md hover:bg-blue-600">
                 ข้อต่อไป ➡️
             </button>
+            <button type="button" onclick="goToHome()" class="mt-4 px-4 py-2 rounded-full text-sm text-gray-500 hover:text-purple-700 hover:bg-purple-50">← กลับหน้าแรก</button>
         </div>
 
-    </div>
+    </main>
 
     <script>
         // --- Game State & Data ---
@@ -254,6 +465,11 @@
         let currentQuestionIndex = 0;
         let questions = [];
         let currentCorrectAnswer = 0;
+        let currentScreen = 'home';
+
+        const MONEY_SPRITE = 'assets/thai-money-reference.png';
+        const MONEY_SPRITE_WIDTH = 1280;
+        const MONEY_SPRITE_HEIGHT = 720;
 
         // UI Elements
         const screens = {
@@ -266,7 +482,10 @@
         const els = {
             scoreDisplay: document.getElementById('score-display'),
             score: document.getElementById('score'),
+            scoreMax: document.getElementById('score-max'),
+            btnBack: document.getElementById('btn-back'),
             qNum: document.getElementById('question-number'),
+            qMax: document.getElementById('question-max'),
             qText: document.getElementById('question-text'),
             moneyDisplay: document.getElementById('money-display'),
             choices: document.getElementById('choices-container'),
@@ -281,21 +500,53 @@
             grabMaxQ: document.getElementById('grab-max-question'),
             grabQText: document.getElementById('grab-question-text'),
             grabTableArea: document.getElementById('grab-table-area'),
-            grabTrayArea: document.getElementById('grab-tray-area')
+            grabTrayArea: document.getElementById('grab-tray-area'),
+            arHud: document.getElementById('ar-hud'),
+            arStatusText: document.getElementById('ar-status-text'),
+            gestureGhost: document.getElementById('gesture-ghost')
         };
 
-        // Currency Data (for generating realistic looking CSS fallback currency)
+        // Crop coordinates point to the user-provided Thai currency reference image.
+        // The source is shown as a specimen for classroom use.
         const currencyData = [
-            { val: 1000, type: 'bill', color: 'bg-stone-200 border-stone-400 text-stone-700', label: '๑๐๐๐', num: '1000', name: 'ธนบัตรหนึ่งพันบาท' },
-            { val: 500, type: 'bill', color: 'bg-fuchsia-200 border-fuchsia-400 text-fuchsia-800', label: '๕๐๐', num: '500', name: 'ธนบัตรห้าร้อยบาท' },
-            { val: 100, type: 'bill', color: 'bg-red-200 border-red-400 text-red-800', label: '๑๐๐', num: '100', name: 'ธนบัตรหนึ่งร้อยบาท' },
-            { val: 50, type: 'bill', color: 'bg-blue-200 border-blue-400 text-blue-800', label: '๕๐', num: '50', name: 'ธนบัตรห้าสิบบาท' },
-            { val: 20, type: 'bill', color: 'bg-green-200 border-green-400 text-green-800', label: '๒๐', num: '20', name: 'ธนบัตรยี่สิบบาท' },
-            { val: 10, type: 'coin', color: 'bg-gray-300 border-yellow-500 border-[6px] text-gray-800 w-16 h-16 text-xl', label: '10', num: '10', name: 'เหรียญสิบบาท' },
-            { val: 5, type: 'coin', color: 'bg-gray-300 border-gray-400 border-2 text-gray-800 w-14 h-14 text-lg', label: '5', num: '5', name: 'เหรียญห้าบาท' },
-            { val: 2, type: 'coin', color: 'bg-yellow-500 border-yellow-600 border-2 text-yellow-900 w-12 h-12 text-md', label: '2', num: '2', name: 'เหรียญสองบาท' },
-            { val: 1, type: 'coin', color: 'bg-gray-300 border-gray-400 border-2 text-gray-800 w-10 h-10 text-sm', label: '1', num: '1', name: 'เหรียญหนึ่งบาท' }
+            { val: 1000, type: 'bill', num: '1,000', name: 'ธนบัตรหนึ่งพันบาท', crop: { x: 249, y: 404, w: 330, h: 149 } },
+            { val: 500, type: 'bill', num: '500', name: 'ธนบัตรห้าร้อยบาท', crop: { x: 398, y: 261, w: 280, h: 130 } },
+            { val: 100, type: 'bill', num: '100', name: 'ธนบัตรหนึ่งร้อยบาท', crop: { x: 122, y: 261, w: 271, h: 130 } },
+            { val: 50, type: 'bill', num: '50', name: 'ธนบัตรห้าสิบบาท', crop: { x: 399, y: 114, w: 261, h: 134 } },
+            { val: 20, type: 'bill', num: '20', name: 'ธนบัตรยี่สิบบาท', crop: { x: 142, y: 114, w: 249, h: 134 } },
+            { val: 10, type: 'coin', num: '10', name: 'เหรียญสิบบาท', crop: { x: 694, y: 112, w: 118, h: 118 } },
+            { val: 5, type: 'coin', num: '5', name: 'เหรียญห้าบาท', crop: { x: 930, y: 115, w: 114, h: 114 } },
+            { val: 2, type: 'coin', num: '2', name: 'เหรียญสองบาท', crop: { x: 700, y: 243, w: 100, h: 100 } },
+            { val: 1, type: 'coin', num: '1', name: 'เหรียญหนึ่งบาท', crop: { x: 931, y: 242, w: 100, h: 100 } }
         ];
+
+        function escapeHTML(value) {
+            return String(value).replace(/[&<>'"]/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[char]));
+        }
+
+        function createMoneyVisualHTML(item, size = 'normal', showValue = true) {
+            const widths = item.type === 'bill'
+                ? { tiny: 88, small: 112, normal: 166 }
+                : { tiny: 56, small: 66, normal: 78 };
+            const width = widths[size] || widths.normal;
+            const scale = width / item.crop.w;
+            const height = item.crop.h * scale;
+            const backgroundWidth = MONEY_SPRITE_WIDTH * scale;
+            const backgroundHeight = MONEY_SPRITE_HEIGHT * scale;
+            const backgroundX = -item.crop.x * scale;
+            const backgroundY = -item.crop.y * scale;
+            const style = [
+                `width:${width.toFixed(2)}px`,
+                `height:${height.toFixed(2)}px`,
+                `background-image:url('${MONEY_SPRITE}')`,
+                `background-size:${backgroundWidth.toFixed(2)}px ${backgroundHeight.toFixed(2)}px`,
+                `background-position:${backgroundX.toFixed(2)}px ${backgroundY.toFixed(2)}px`
+            ].join(';');
+            const valueChip = showValue ? `<span class="money-value-chip">${escapeHTML(item.num)} บาท</span>` : '';
+            return `<span class="money-item"><span class="money-photo ${item.type === 'bill' ? 'bill-photo' : 'coin-photo'}" style="${style}" role="img" aria-label="${escapeHTML(item.name)}"></span>${valueChip}</span>`;
+        }
 
         /* -------------------------------------------------------------------------- */
         /* TEXT TO SPEECH (TTS) LOGIC                                                 */
@@ -328,8 +579,10 @@
             board.innerHTML = '';
             currencyData.forEach(item => {
                 const btn = document.createElement('button');
-                btn.className = `px-3 py-2 rounded-lg font-bold text-sm shadow border transition-transform hover:scale-105 active:scale-95 ${item.type === 'bill' ? 'bg-white border-gray-300' : 'bg-gray-200 border-gray-400'}`;
-                btn.innerText = (item.type === 'bill' ? 'แบงก์ ' : 'เหรียญ ') + item.num;
+                btn.type = 'button';
+                btn.className = 'btn-choice bg-white/85 hover:bg-white border border-white rounded-xl p-3 flex flex-col items-center justify-between gap-2 min-h-[122px]';
+                btn.innerHTML = `${createMoneyVisualHTML(item, 'tiny', false)}<span class="text-xs font-semibold text-gray-700">${escapeHTML(item.name)}</span>`;
+                btn.setAttribute('aria-label', `ฟังเสียง ${item.name}`);
                 btn.onclick = () => speak(item.name);
                 board.appendChild(btn);
             });
@@ -337,15 +590,28 @@
         initLearningRoom(); // init once
 
         function showScreen(screenName) {
-            Object.values(screens).forEach(s => s.classList.add('hidden'));
+            Object.values(screens).forEach(s => {
+                s.classList.add('hidden');
+                s.classList.remove('flex');
+            });
             screens[screenName].classList.remove('hidden');
             screens[screenName].classList.add('flex');
+            currentScreen = screenName;
+            els.btnBack.classList.toggle('hidden', screenName === 'home');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function goToHome() {
             stopSpeak();
+            els.feedback.classList.add('hidden');
+            els.feedback.classList.remove('flex');
             showScreen('home');
             els.scoreDisplay.classList.add('hidden');
+        }
+
+        function goBack() {
+            if (currentScreen === 'home') return;
+            goToHome();
         }
 
         function openLearningRoom() {
@@ -361,13 +627,11 @@
             currentQuestionIndex = 0;
             questions = [];
             els.score.innerText = score;
-            
-            document.getElementById('score-display').classList.remove('hidden');
-            
+
             generateQuestions(mode);
-            
-            // อัปเดตเป้าหมายคะแนนสูงสุดใน UI ให้ตรงกับจำนวนข้อ
-            document.getElementById('score-display').innerHTML = `คะแนน: <span id="score">0</span>/${questions.length}`;
+            els.scoreMax.innerText = questions.length;
+            els.scoreDisplay.classList.remove('hidden');
+            els.qMax.innerText = questions.length;
 
             if (mode === 'grab') {
                 els.grabMaxQ.innerText = questions.length;
@@ -385,7 +649,7 @@
                 let q = {};
                 if (mode === 'count') {
                     // สุ่มจำนวนเงิน 20 ถึง 2000
-                    let amount = Math.floor(Math.random() * 198) * 10 + 20; 
+                    let amount = Math.floor(Math.random() * 198) * 10 + 20;
                     q.text = "มีเงินทั้งหมดกี่บาท ?";
                     q.amount = amount;
                     q.correct = amount;
@@ -395,7 +659,7 @@
                     let price = Math.floor(Math.random() * 45) * 10 + 10; // 10 ถึง 450
                     let payOpts = [100, 500, 1000];
                     let pay = payOpts.find(p => p > price) || 1000;
-                    
+
                     q.text = `ซื้อขนม ${price} บาท จ่ายแบงก์ ${pay} จะได้รับเงินทอนกี่บาท ?`;
                     q.pay = pay;
                     q.price = price;
@@ -409,7 +673,7 @@
                     q.type = 'grab';
                     q.correct = amount;
                 }
-                
+
                 if (mode !== 'grab') {
                     // สร้างตัวเลือก (Choices) สำหรับโหมดปรนัย
                     let choices = new Set([q.correct]);
@@ -419,7 +683,7 @@
                     }
                     q.choices = Array.from(choices).sort(() => Math.random() - 0.5);
                 }
-                
+
                 questions.push(q);
             }
         }
@@ -433,7 +697,7 @@
         function generateGrabPool(target) {
             let pool = [];
             let remaining = target;
-            
+
             // 1. สร้างเหรียญ/แบงก์ให้พอดีกับเป้าหมายก่อนรับประกันว่ามีคำตอบ
             for (let c of currencyData) {
                 while (remaining >= c.val) {
@@ -441,29 +705,30 @@
                     remaining -= c.val;
                 }
             }
-            
+
             // 2. เพิ่มเงินหลอก (Distractors) ลงไปบนโต๊ะ
             let numDistractors = 3 + Math.floor(Math.random() * 5);
             for(let i=0; i<numDistractors; i++) {
                 let randomCurrency = currencyData[Math.floor(Math.random() * currencyData.length)];
                 pool.push({...randomCurrency, uniqueId: Math.random().toString(36).substr(2, 9)});
             }
-            
+
             // สลับตำแหน่งไม่ให้เดาง่าย
             return pool.sort(() => Math.random() - 0.5);
         }
 
         function loadGrabQuestion() {
             els.feedback.classList.add('hidden');
+            els.feedback.classList.remove('flex');
             let q = questions[currentQuestionIndex];
             currentCorrectAnswer = q.target;
-            
+
             els.grabQNum.innerText = currentQuestionIndex + 1;
             els.grabQText.innerText = q.text;
-            
+
             grabTableItems = generateGrabPool(q.target);
             grabTrayItems = [];
-            
+
             renderGrabAreas();
             speak(q.text);
         }
@@ -478,32 +743,39 @@
 
         function createGrabElement(item, location) {
             let btn = document.createElement('button');
-            btn.className = "btn-choice transform transition-all hover:scale-110 focus:outline-none";
-            
-            // สร้าง UI เงินขนาดย่อส่วน
-            if (item.type === 'bill') {
-                btn.innerHTML = `<div class="bill ${item.color} shadow-md" style="width: 100px; height: 48px; font-size: 0.9rem;">
-                                    <span>${item.num}</span><span class="text-sm">${item.label}</span><span>${item.num}</span>
-                                 </div>`;
-            } else {
-                btn.innerHTML = `<div class="coin ${item.color} shadow-md" style="transform: scale(0.85); margin: -5px;">${item.label}</div>`;
-            }
+            btn.type = 'button';
+            btn.className = 'grab-money-button btn-choice focus:outline-none';
+            btn.dataset.grabId = item.uniqueId;
+            btn.dataset.location = location;
+            btn.setAttribute('aria-label', `${location === 'table' ? 'หยิบ' : 'คืน'} ${item.name}`);
+            btn.innerHTML = createMoneyVisualHTML(item, 'small');
 
             btn.onclick = () => {
-                stopSpeak(); // ปิดเสียงโจทย์หากผู้เล่นเริ่มหยิบ
-                if (location === 'table') {
-                    // ย้ายจากโต๊ะไปตะกร้า
-                    grabTableItems = grabTableItems.filter(i => i.uniqueId !== item.uniqueId);
-                    grabTrayItems.push(item);
-                } else {
-                    // ย้ายจากตะกร้าคืนโต๊ะ
-                    grabTrayItems = grabTrayItems.filter(i => i.uniqueId !== item.uniqueId);
-                    grabTableItems.push(item);
-                }
-                renderGrabAreas();
-                speak(item.name); // อ่านชื่อเงินให้ฟังตอนกดหยิบ
+                moveGrabItem(item.uniqueId, location === 'table' ? 'tray' : 'table');
             };
             return btn;
+        }
+
+        function moveGrabItem(uniqueId, destination) {
+            stopSpeak();
+            const fromTable = grabTableItems.find(item => item.uniqueId === uniqueId);
+            const fromTray = grabTrayItems.find(item => item.uniqueId === uniqueId);
+            const item = fromTable || fromTray;
+            if (!item) return false;
+
+            if (destination === 'tray' && fromTable) {
+                grabTableItems = grabTableItems.filter(entry => entry.uniqueId !== uniqueId);
+                grabTrayItems.push(item);
+            } else if (destination === 'table' && fromTray) {
+                grabTrayItems = grabTrayItems.filter(entry => entry.uniqueId !== uniqueId);
+                grabTableItems.push(item);
+            } else {
+                return false;
+            }
+
+            renderGrabAreas();
+            speak(item.name);
+            return true;
         }
 
         function replayGrabAudio() {
@@ -517,10 +789,10 @@
 
             els.feedback.classList.remove('hidden');
             els.feedback.classList.add('flex');
-            
+
             if (isCorrect) {
                 score++;
-                document.getElementById('score').innerText = score;
+                els.score.innerText = score;
                 els.feedbackIcon.innerText = '🎉';
                 els.feedbackText.innerText = 'ถูกต้อง เก่งมาก!';
                 els.feedbackText.className = 'text-3xl font-bold mb-6 text-green-500 text-center';
@@ -531,7 +803,7 @@
                 els.feedbackText.className = 'text-2xl font-bold mb-6 text-red-500 text-center px-4 whitespace-pre-line';
                 speak(`ยังไม่ถูกจ้า หนูหยิบมา ${totalGrabbed} บาท ต้องหยิบ ${currentCorrectAnswer} บาท`);
             }
-            
+
             els.btnNext.focus();
         }
 
@@ -542,21 +814,12 @@
 
             for (let c of currencyData) {
                 while (remaining >= c.val && itemsCount < maxItems) {
-                    if (c.type === 'bill') {
-                        html += `
-                            <div class="bill ${c.color}">
-                                <span>${c.num}</span>
-                                <span class="text-2xl">${c.label}</span>
-                                <span>${c.num}</span>
-                            </div>`;
-                    } else {
-                        html += `<div class="coin ${c.color}">${c.label}</div>`;
-                    }
+                    html += createMoneyVisualHTML(c, 'normal');
                     remaining -= c.val;
                     itemsCount++;
                 }
             }
-            
+
             // ถ้ายังมีเศษเหลือแต่จำนวนชิ้นเกิน (เพื่อป้องกันหน้าจอรกล้น)
             if (remaining > 0) {
                  html += `<div class="font-bold text-gray-500 self-center">+ อีก ${remaining} บาท</div>`;
@@ -566,12 +829,13 @@
 
         function loadQuestion() {
             els.feedback.classList.add('hidden');
+            els.feedback.classList.remove('flex');
             let q = questions[currentQuestionIndex];
             currentCorrectAnswer = q.correct;
-            
+
             els.qNum.innerText = currentQuestionIndex + 1;
             els.qText.innerText = q.text;
-            
+
             // แสดงรูปเงิน
             if (q.type === 'count') {
                 els.moneyDisplay.innerHTML = createMoneyHTML(q.amount);
@@ -589,8 +853,10 @@
             els.choices.innerHTML = '';
             q.choices.forEach(c => {
                 let btn = document.createElement('button');
-                btn.className = "btn-choice bg-white hover:bg-indigo-50 text-indigo-700 font-bold py-4 rounded-xl text-xl border-2 border-indigo-200 shadow-sm";
+                btn.type = 'button';
+                btn.className = 'btn-choice bg-white/90 hover:bg-indigo-50 text-indigo-800 font-semibold py-4 rounded-xl text-xl border-2 border-indigo-200 shadow-sm';
                 btn.innerText = `${c} บาท`;
+                btn.setAttribute('aria-label', `ตอบ ${c} บาท`);
                 btn.onclick = () => checkAnswer(c, btn);
                 els.choices.appendChild(btn);
             });
@@ -602,13 +868,13 @@
         function checkAnswer(selected, btnElement) {
             stopSpeak(); // ตัดเสียงพูดทันทีเมื่อตอบ
             let isCorrect = (selected === currentCorrectAnswer);
-            
+
             // ปิดปุ่มทั้งหมด
             Array.from(els.choices.children).forEach(b => b.disabled = true);
 
             els.feedback.classList.remove('hidden');
             els.feedback.classList.add('flex');
-            
+
             if (isCorrect) {
                 score++;
                 els.score.innerText = score;
@@ -622,13 +888,15 @@
                 els.feedbackText.className = 'text-3xl font-bold mb-6 text-red-500';
                 speak(`ผิดจ้า คำตอบที่ถูกคือ ${currentCorrectAnswer} บาท`);
             }
-            
+
             // ย้ายปุ่มไปข้อถัดไปมาไว้ที่ overlay และ focus รอ (สำหรับกล้องจับมือ)
             els.btnNext.focus();
         }
 
         function nextQuestion() {
             stopSpeak();
+            els.feedback.classList.add('hidden');
+            els.feedback.classList.remove('flex');
             currentQuestionIndex++;
             if (currentQuestionIndex < questions.length) {
                 if (currentMode === 'grab') {
@@ -652,157 +920,324 @@
         let cameraModeEnabled = false;
         let camera = null;
         let hands = null;
+        let canvasCtx = null;
         let hoveredElement = null;
         let hoverStartTime = 0;
+        let hoverCooldownUntil = 0;
+        let isPinching = false;
+        let pinchTarget = null;
+        let pinchGrab = null;
+        let lastPointer = { x: 0, y: 0 };
 
-        function toggleCameraMode() {
-            const btnCam = document.getElementById('btn-toggle-cam');
+        const HOVER_ACTIVATE_MS = 1450;
+        const PINCH_START_DISTANCE = 0.055;
+        const PINCH_RELEASE_DISTANCE = 0.085;
+
+        function setArStatus(message) {
+            els.arStatusText.innerText = message;
+        }
+
+        function updateCameraButton(state) {
+            const btn = document.getElementById('btn-toggle-cam');
+            const icon = document.getElementById('cam-button-icon');
+            const title = document.getElementById('cam-button-title');
+            btn.disabled = state === 'loading';
+            btn.setAttribute('aria-pressed', state === 'active' ? 'true' : 'false');
+            btn.style.backgroundColor = state === 'active' ? 'rgba(220,38,38,.86)' : '';
+            icon.innerText = state === 'loading' ? '⏳' : state === 'active' ? '⏹️' : '📷';
+            title.innerText = state === 'loading' ? 'กำลังเปิด AR...' : state === 'active' ? 'ปิด AR Camera' : 'เปิด AR Camera';
+        }
+
+        async function toggleCameraMode() {
             if (cameraModeEnabled) {
-                // ปิดกล้อง
-                cameraModeEnabled = false;
-                document.getElementById('camera-preview-container').classList.add('hidden');
-                document.getElementById('hand-canvas').classList.add('hidden');
-                btnCam.innerHTML = '📷 เปิดกล้องจับมือ';
-                btnCam.classList.remove('bg-red-500', 'hover:bg-red-600', 'border-red-400');
-                btnCam.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'border-indigo-400');
+                stopCameraMode();
             } else {
-                // เปิดกล้อง
-                cameraModeEnabled = true;
-                document.getElementById('camera-preview-container').classList.remove('hidden');
-                document.getElementById('hand-canvas').classList.remove('hidden');
-                btnCam.innerHTML = '⏳ กำลังเปิด...';
-                initHandTracking();
+                await startCameraMode();
             }
         }
 
-        function initHandTracking() {
-            if (hands) {
-                // ถ้าโหลด AI ไว้แล้ว ให้กลับมาทำงานต่อได้เลย
-                const btnCam = document.getElementById('btn-toggle-cam');
-                btnCam.innerHTML = '🔴 ปิดกล้อง';
-                btnCam.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'border-indigo-400');
-                btnCam.classList.add('bg-red-500', 'hover:bg-red-600', 'border-red-400');
-                return; 
+        async function startCameraMode() {
+            cameraModeEnabled = true;
+            document.body.classList.add('ar-mode');
+            document.getElementById('camera-preview-container').classList.remove('hidden');
+            document.getElementById('hand-canvas').classList.remove('hidden');
+            els.arHud.classList.remove('hidden');
+            updateCameraButton('loading');
+            setArStatus('กำลังเตรียมกล้องและระบบติดตามมือ...');
+
+            try {
+                await initHandTracking();
+                await camera.start();
+                if (!cameraModeEnabled) return;
+                updateCameraButton('active');
+                setArStatus('ชี้เพื่อเลือก • จีบนิ้วโป้งกับนิ้วชี้เพื่อกดหรือหยิบ');
+            } catch (error) {
+                console.error('AR Camera error:', error);
+                stopCameraMode();
+                alert('ไม่สามารถเปิด AR Camera ได้ กรุณาอนุญาตใช้กล้อง (Allow Camera) และเปิดเกมผ่าน HTTPS หรือ localhost');
+            }
+        }
+
+        function stopCameraMode() {
+            cameraModeEnabled = false;
+            if (camera && typeof camera.stop === 'function') {
+                try { camera.stop(); } catch (error) { console.warn('Camera stop:', error); }
+            }
+            document.body.classList.remove('ar-mode');
+            document.getElementById('camera-preview-container').classList.add('hidden');
+            document.getElementById('hand-canvas').classList.add('hidden');
+            els.arHud.classList.add('hidden');
+            updateCameraButton('idle');
+            clearHoverTarget();
+            cancelPinch();
+            if (canvasCtx) canvasCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+        }
+
+        async function initHandTracking() {
+            if (hands && camera) return;
+            if (typeof Hands === 'undefined' || typeof Camera === 'undefined') {
+                throw new Error('MediaPipe libraries are unavailable');
             }
 
             const videoElement = document.getElementById('webcam');
             const canvasElement = document.getElementById('hand-canvas');
-            const canvasCtx = canvasElement.getContext('2d');
+            canvasCtx = canvasElement.getContext('2d');
 
             function resizeCanvas() {
-                canvasElement.width = window.innerWidth;
-                canvasElement.height = window.innerHeight;
+                const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+                canvasElement.width = Math.round(window.innerWidth * pixelRatio);
+                canvasElement.height = Math.round(window.innerHeight * pixelRatio);
+                canvasElement.style.width = `${window.innerWidth}px`;
+                canvasElement.style.height = `${window.innerHeight}px`;
+                canvasCtx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
             }
-            window.addEventListener('resize', resizeCanvas);
+            window.addEventListener('resize', resizeCanvas, { passive: true });
             resizeCanvas();
 
-            // โหลดโมเดลจับมือ
-            hands = new Hands({locateFile: (file) => {
-                return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-            }});
-
+            hands = new Hands({
+                locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+            });
             hands.setOptions({
                 maxNumHands: 1,
                 modelComplexity: 1,
-                minDetectionConfidence: 0.6,
-                minTrackingConfidence: 0.6
+                minDetectionConfidence: 0.62,
+                minTrackingConfidence: 0.62
             });
-
-            hands.onResults((results) => {
-                canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-
-                if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                    const landmarks = results.multiHandLandmarks[0];
-                    const indexTip = landmarks[8]; // ปลายจุดนิ้วชี้
-                    
-                    // ปรับตำแหน่งแกน X ให้ตรงกับการส่องกระจก
-                    const x = (1 - indexTip.x) * window.innerWidth;
-                    const y = indexTip.y * window.innerHeight;
-
-                    // วาดจุด Cursor ที่ปลายนิ้ว
-                    canvasCtx.beginPath();
-                    canvasCtx.arc(x, y, 12, 0, 2 * Math.PI);
-                    canvasCtx.fillStyle = '#ec4899'; // สีชมพู
-                    canvasCtx.fill();
-                    canvasCtx.lineWidth = 3;
-                    canvasCtx.strokeStyle = 'white';
-                    canvasCtx.stroke();
-                    
-                    // ตรวจสอบการเล็งและแตะปุ่ม
-                    checkHover(x, y, canvasCtx);
-                } else {
-                    hoveredElement = null;
-                    hoverStartTime = 0;
-                }
-            });
+            hands.onResults(handleHandResults);
 
             camera = new Camera(videoElement, {
                 onFrame: async () => {
-                    if(cameraModeEnabled) {
-                        await hands.send({image: videoElement});
-                    }
+                    if (cameraModeEnabled) await hands.send({ image: videoElement });
                 },
-                width: 320,
-                height: 240
+                width: 960,
+                height: 540
             });
+        }
 
-            camera.start().then(() => {
-                const btnCam = document.getElementById('btn-toggle-cam');
-                btnCam.innerHTML = '🔴 ปิดกล้อง';
-                btnCam.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'border-indigo-400');
-                btnCam.classList.add('bg-red-500', 'hover:bg-red-600', 'border-red-400');
-            }).catch(err => {
-                alert('ไม่สามารถเปิดกล้องได้ กรุณาตรวจสอบการอนุญาตใช้งานกล้อง (Allow Camera) บนเบราว์เซอร์');
-                toggleCameraMode(); // ยกเลิกโหมดกล้องหากเปิดไม่สำเร็จ
-            });
+        function handleHandResults(results) {
+            if (!cameraModeEnabled || !canvasCtx) return;
+            canvasCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+            const landmarks = results.multiHandLandmarks && results.multiHandLandmarks[0];
+            if (!landmarks) {
+                clearHoverTarget();
+                if (isPinching) cancelPinch();
+                setArStatus('ยกมือให้อยู่ในกรอบกล้อง แล้วใช้นิ้วชี้ควบคุม');
+                return;
+            }
+
+            const indexTip = landmarks[8];
+            const thumbTip = landmarks[4];
+            const indexPoint = mapCameraPointToViewport(indexTip);
+            const thumbPoint = mapCameraPointToViewport(thumbTip);
+            const x = indexPoint.x;
+            const y = indexPoint.y;
+            const thumbX = thumbPoint.x;
+            const thumbY = thumbPoint.y;
+            const pinchDistance = Math.hypot(indexTip.x - thumbTip.x, indexTip.y - thumbTip.y);
+            lastPointer = { x, y };
+
+            canvasCtx.beginPath();
+            canvasCtx.moveTo(x, y);
+            canvasCtx.lineTo(thumbX, thumbY);
+            canvasCtx.strokeStyle = isPinching ? 'rgba(34,197,94,.9)' : 'rgba(236,72,153,.55)';
+            canvasCtx.lineWidth = 4;
+            canvasCtx.lineCap = 'round';
+            canvasCtx.stroke();
+
+            if (!isPinching && pinchDistance < PINCH_START_DISTANCE) {
+                beginPinch(x, y);
+            } else if (isPinching && pinchDistance > PINCH_RELEASE_DISTANCE) {
+                endPinch(x, y);
+            }
+
+            if (isPinching) {
+                updateGestureGhost(x, y);
+            } else {
+                checkHover(x, y, canvasCtx);
+            }
+
+            drawFingerCursor(x, y, isPinching);
+        }
+
+        function mapCameraPointToViewport(point) {
+            const video = document.getElementById('webcam');
+            const sourceWidth = video.videoWidth || 960;
+            const sourceHeight = video.videoHeight || 540;
+            const scale = Math.max(window.innerWidth / sourceWidth, window.innerHeight / sourceHeight);
+            const renderedWidth = sourceWidth * scale;
+            const renderedHeight = sourceHeight * scale;
+            const offsetX = (window.innerWidth - renderedWidth) / 2;
+            const offsetY = (window.innerHeight - renderedHeight) / 2;
+            return {
+                x: offsetX + (1 - point.x) * renderedWidth,
+                y: offsetY + point.y * renderedHeight
+            };
+        }
+
+        function drawFingerCursor(x, y, closed) {
+            canvasCtx.beginPath();
+            canvasCtx.arc(x, y, closed ? 15 : 12, 0, 2 * Math.PI);
+            canvasCtx.fillStyle = closed ? '#22c55e' : '#ec4899';
+            canvasCtx.fill();
+            canvasCtx.lineWidth = 4;
+            canvasCtx.strokeStyle = 'white';
+            canvasCtx.stroke();
+        }
+
+        function getActionTarget(x, y) {
+            const element = document.elementFromPoint(x, y);
+            const target = element && element.closest('button');
+            return target && !target.disabled && target.offsetParent !== null ? target : null;
+        }
+
+        function beginPinch(x, y) {
+            isPinching = true;
+            clearHoverTarget();
+            const target = getActionTarget(x, y);
+
+            if (!target) {
+                setArStatus('กำลังจีบนิ้ว — เลื่อนไปเหนือปุ่มหรือรูปเงิน');
+                return;
+            }
+
+            target.classList.add('ar-focus');
+            if (target.classList.contains('grab-money-button')) {
+                pinchGrab = {
+                    id: target.dataset.grabId,
+                    origin: target.dataset.location,
+                    element: target
+                };
+                target.classList.add('ar-picked');
+                els.gestureGhost.innerHTML = target.innerHTML;
+                els.gestureGhost.classList.remove('hidden');
+                updateGestureGhost(x, y);
+                setArStatus('หยิบแล้ว! จีบนิ้วค้างไว้ ลากไปยังพื้นที่อีกฝั่ง แล้วคลายนิ้วเพื่อวาง');
+            } else {
+                pinchTarget = target;
+                setArStatus(`เลือก ${target.getAttribute('aria-label') || target.innerText.trim()}`);
+            }
+        }
+
+        function endPinch(x, y) {
+            isPinching = false;
+            let status = 'ชี้เพื่อเลือก • จีบนิ้วโป้งกับนิ้วชี้เพื่อกดหรือหยิบ';
+
+            if (pinchGrab) {
+                const releaseElement = document.elementFromPoint(x, y);
+                const dropZone = releaseElement && releaseElement.closest('[data-drop-zone]');
+                const destination = dropZone && dropZone.dataset.dropZone;
+                pinchGrab.element.classList.remove('ar-focus', 'ar-picked');
+
+                if (destination && destination !== pinchGrab.origin) {
+                    const moved = moveGrabItem(pinchGrab.id, destination);
+                    status = moved ? 'วางเงินเรียบร้อยแล้ว ✓' : 'ยังวางไม่ได้ ลองอีกครั้ง';
+                } else {
+                    status = 'ยังไม่ได้วาง — ลากเงินไปอีกฝั่งแล้วคลายนิ้ว';
+                }
+            } else if (pinchTarget) {
+                pinchTarget.classList.remove('ar-focus');
+                if (!pinchTarget.disabled && pinchTarget.offsetParent !== null) {
+                    pinchTarget.click();
+                    status = 'เลือกแล้ว ✓';
+                }
+            }
+
+            pinchGrab = null;
+            pinchTarget = null;
+            els.gestureGhost.classList.add('hidden');
+            els.gestureGhost.innerHTML = '';
+            hoverCooldownUntil = performance.now() + 750;
+            setArStatus(status);
+        }
+
+        function cancelPinch() {
+            isPinching = false;
+            if (pinchGrab && pinchGrab.element) pinchGrab.element.classList.remove('ar-focus', 'ar-picked');
+            if (pinchTarget) pinchTarget.classList.remove('ar-focus');
+            pinchGrab = null;
+            pinchTarget = null;
+            els.gestureGhost.classList.add('hidden');
+            els.gestureGhost.innerHTML = '';
+        }
+
+        function updateGestureGhost(x, y) {
+            if (!pinchGrab) return;
+            els.gestureGhost.style.left = `${x}px`;
+            els.gestureGhost.style.top = `${y - 34}px`;
+        }
+
+        function clearHoverTarget() {
+            if (hoveredElement) hoveredElement.classList.remove('ar-focus');
+            hoveredElement = null;
+            hoverStartTime = 0;
         }
 
         function checkHover(x, y, ctx) {
-            if (!cameraModeEnabled) return;
-            
-            // หา Element ที่จุด x,y ชี้อยู่ (ต้องแน่ใจว่า canvas มี pointer-events: none)
-            const element = document.elementFromPoint(x, y);
-            if (element) {
-                // ค้นหาปุ่มที่ใกล้ที่สุด
-                const target = element.closest('button');
-                
-                // ตรวจสอบว่าปุ่มกดได้ และไม่ได้ถูกซ่อนอยู่
-                if (target && !target.disabled && target.offsetParent !== null) {
-                    if (target === hoveredElement) {
-                        const elapsed = Date.now() - hoverStartTime;
-                        
-                        // วาดวงแหวนความคืบหน้าเวลาแช่นิ้วค้างไว้
-                        ctx.beginPath();
-                        ctx.arc(x, y, 22, -Math.PI/2, (-Math.PI/2) + (2 * Math.PI * (elapsed / 1200))); // ใช้เวลาแช่ 1.2 วินาที
-                        ctx.strokeStyle = '#22c55e'; // สีเขียว
-                        ctx.lineWidth = 5;
-                        ctx.stroke();
+            if (!cameraModeEnabled || performance.now() < hoverCooldownUntil) return;
+            const target = getActionTarget(x, y);
 
-                        if (elapsed > 1200) {
-                            // สั่งให้คลิก!
-                            target.click();
-                            hoveredElement = null;
-                            hoverStartTime = Date.now() + 1000; // ตั้งเวลาหน่วง 1 วินาทีกันคลิกซ้ำรัวๆ
-                            
-                            // Effect สีเขียวระเบิดเบาๆ เพื่อยืนยันการกด
-                            ctx.beginPath();
-                            ctx.arc(x, y, 30, 0, 2 * Math.PI);
-                            ctx.fillStyle = 'rgba(34, 197, 94, 0.5)';
-                            ctx.fill();
-                        }
-                    } else {
-                        if (Date.now() > hoverStartTime) { // รอให้หมดช่วงหน่วงเวลาก่อนเริ่มจับเป้าใหม่
-                            hoveredElement = target;
-                            hoverStartTime = Date.now();
-                        }
-                    }
-                } else {
-                    hoveredElement = null;
-                }
-            } else {
-                hoveredElement = null;
+            if (!target) {
+                clearHoverTarget();
+                return;
+            }
+
+            if (target !== hoveredElement) {
+                clearHoverTarget();
+                hoveredElement = target;
+                hoverStartTime = performance.now();
+                target.classList.add('ar-focus');
+                setArStatus('ค้างนิ้วไว้เพื่อเลือก หรือจีบนิ้วเพื่อเลือกทันที');
+                return;
+            }
+
+            const elapsed = performance.now() - hoverStartTime;
+            const progress = Math.min(elapsed / HOVER_ACTIVATE_MS, 1);
+            ctx.beginPath();
+            ctx.arc(x, y, 24, -Math.PI / 2, (-Math.PI / 2) + (2 * Math.PI * progress));
+            ctx.strokeStyle = '#22c55e';
+            ctx.lineWidth = 6;
+            ctx.stroke();
+
+            if (elapsed >= HOVER_ACTIVATE_MS) {
+                const activated = hoveredElement;
+                clearHoverTarget();
+                hoverCooldownUntil = performance.now() + 900;
+                activated.click();
+                setArStatus('เลือกแล้ว ✓');
+                ctx.beginPath();
+                ctx.arc(x, y, 34, 0, 2 * Math.PI);
+                ctx.fillStyle = 'rgba(34,197,94,.4)';
+                ctx.fill();
             }
         }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && cameraModeEnabled) stopCameraMode();
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && currentScreen !== 'home') goBack();
+        });
     </script>
 </body>
 </html>
